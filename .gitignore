@@ -1,6 +1,5 @@
 bin/
 lib/
-mg/
 
 *.class
 *.jar
