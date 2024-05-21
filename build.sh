@@ -1,5 +1,5 @@
 #!/bin/bash
-
+ 
 current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 bin_dir="$current_dir/bin"
 lib_dir="$current_dir/lib"
