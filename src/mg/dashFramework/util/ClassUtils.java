@@ -36,4 +36,24 @@ public class ClassUtils{
         }
         return result;
     }
+
+    /* function to get an instance of a class by his name */
+    public static Object getInstance(String className)throws Exception{
+        return Class.forName(className).getConstructor().newInstance();
+    }
+
+    /* function to invoke a method in a class */
+    public static Object invokeMethod(String className, String methName){
+        Object result = null;
+        try{
+            Object o = ClassUtils.getInstance(className);
+            if(o != null){
+                Method m = MethodUtils.getMethodByName(o, methName);
+                result = m.invoke(o);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return result;
+    }
 }
