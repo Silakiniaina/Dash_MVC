@@ -11,18 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
+import mg.dashFramework.annotation.Get;
 
 public class FrontController extends HttpServlet {
-    private ArrayList<Class<?>> controllerClasses;
-    private boolean checked = false;
-
-    // Class methods
-    private void initVariables() throws ClassNotFoundException, IOException {
-        String packageName = this.getInitParameter("package_name");
-        ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-        setControllerClasses(classes);
-        setChecked(true);
-    }
+    HashMap<String, Mapping> URLMapping;
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -32,13 +24,7 @@ public class FrontController extends HttpServlet {
             out.println("<h1>Welcome to Dash MVC Framework </h1>");
             out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a></b>");
             out.println("<b> Here are the list of the controllers : </b>");
-
-            if (!isChecked()) {
-                initVariables();
-            }
-
-            ArrayList<Class<?>> classes = getControllerClasses();
-
+            
             for (Class<?> clazz : classes) {
                 out.println("<li>" + clazz.getSimpleName() + "</li>");
             }
@@ -62,7 +48,18 @@ public class FrontController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         try {
-            initVariables();
+            this.setURLMapping(new HashMap<String, Mapping>());
+            String packageName = this.getInitParameter("package_name");
+            ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+
+            foreach(Class c : classes){
+                ArrayList<Method> listMethods = ClassUtils.getListMethodsClass(c);
+                foreach(Method m : listMethods){
+                    if(MethodUtils.methodHasAnnotation(m,Get.class)){
+                        
+                    }
+                }
+            }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -70,20 +67,13 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    // Getters and setters
-    public boolean isChecked() {
-        return checked;
+    /* Getters */
+    public HashMap<String, Mapping> getURLMapping(){
+        return this.URLMapping;
     }
 
-    public void setChecked(boolean checked) {
-        this.checked = checked;
-    }
-
-    public ArrayList<Class<?>> getControllerClasses() {
-        return controllerClasses;
-    }
-
-    public void setControllerClasses(ArrayList<Class<?>> controllerClasses) {
-        this.controllerClasses = controllerClasses;
+    /* Setters */
+    public void setURLMapping(HashMap<String, Mapping> u){
+        this.URLMapping = u;
     }
 }
