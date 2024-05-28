@@ -10,9 +10,14 @@ if [ ! -d "$temp_dir" ]; then
 fi
 
 find "$current_dir/src" -type f -name "*.java" -exec cp -r {} "$temp_dir" \;
-javac -d "$current_dir/$bin_dir" -cp "$lib_dir/*" "$current_dir"/src/temp/*.java
+javac -d "$bin_dir" -cp "$lib_dir/*" "$current_dir"/src/temp/*.java
 rm -R "$current_dir"/src/temp
 
 echo "Compilation finished"
+cd bin
+jar -cf "../dash_mvc.jar" "mg"
+cd ..
 
-jar -cf "dash_mvc.jar" "mg"
+# Uncomment these line below and change the path of your test directory to copy directly the jar file to you lib and remove it after
+# cp "dash_mvc.jar" "../Test_dash/lib/"
+# rm "dash_mvc.jar"

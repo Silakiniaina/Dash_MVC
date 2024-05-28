@@ -1,6 +1,12 @@
 package mg.dashFramework.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
+
+import mg.dashFramework.annotation.Get;
+import mg.dashFramework.shared.Mapping;
 
 public class ClassUtils{
 
@@ -16,16 +22,18 @@ public class ClassUtils{
 
 
     /* function to get the HashMap of the method having an annotation */
-    public static void includeMethodHavingAnnotation(ArrayList<Class> listClasses, Class<? extends Annotation> a, HashMap<String, Mapping> mapping){
-        foreach(Class c : listClasses){
+    public static HashMap<String, Mapping> includeMethodHavingAnnotationGet(ArrayList<Class<?>> listClasses){
+        HashMap<String, Mapping> result = new HashMap<String, Mapping>();
+        for (Class<?> c : listClasses){
             ArrayList<Method> listMethods = ClassUtils.getListMethodsClass(c);
-            foreach(Method m : listMethods){
-                if(MethodUtils.methodHasAnnotation(m, a)){
-                    String URL = m.getAnnotation(Get.class).value;
+            for (Method m : listMethods){
+                if(m.isAnnotationPresent(Get.class)){
+                    String URL = m.getAnnotation(Get.class).value();
                     Mapping map = new Mapping(c.getName(), m.getName());
-                    mapping.put(URL, map);
+                    result.put(URL, map);
                 }
             }
         }
+        return result;
     }
 }

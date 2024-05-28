@@ -3,6 +3,8 @@ package mg.dashFramework.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -13,24 +15,28 @@ import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
 import mg.dashFramework.annotation.Get;
 
+import mg.dashFramework.shared.Mapping;
+import mg.dashFramework.util.ClassUtils;
+
 public class FrontController extends HttpServlet {
     HashMap<String, Mapping> URLMapping;
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    private void processRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-
+        String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
+        Mapping map = this.getURLMapping().get(requestURL);
         try {
             out.println("<h1>Welcome to Dash MVC Framework </h1>");
-            out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a></b>");
-            out.println("<b> Here are the list of the controllers : </b>");
-            
-            for (Class<?> clazz : classes) {
-                out.println("<li>" + clazz.getSimpleName() + "</li>");
+            out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a><br>");
+            if(map != null){
+                out.println("<b> Here is the method and class associated with your URL : </b><br>");
+                out.println("<u>className </u> : "+map.getClassName() +"<br>");
+                out.println("<u>methodName </u> : "+map.getMethodName()+"<br>");
+            }else{ 
+                out.println("<b>There is no method associated with the URL that you entered</b>");
             }
-            out.println("</ul>");
         } catch (Exception e) {
-            out.println(e);
+            out.println(e.getMessage());
         }
     }
 
@@ -47,24 +53,11 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        try {
-            this.setURLMapping(new HashMap<String, Mapping>());
-            String packageName = this.getInitParameter("package_name");
-            ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-
-            foreach(Class c : classes){
-                ArrayList<Method> listMethods = ClassUtils.getListMethodsClass(c);
-                foreach(Method m : listMethods){
-                    if(MethodUtils.methodHasAnnotation(m,Get.class)){
-                        
-                    }
-                }
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.setURLMapping(new HashMap<String, Mapping>());
+        String packageName = this.getInitParameter("controller_dir");
+        ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+        HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingAnnotationGet(classes);
+        this.setURLMapping(mapping);
     }
 
     /* Getters */

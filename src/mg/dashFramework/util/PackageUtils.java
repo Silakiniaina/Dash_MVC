@@ -33,17 +33,18 @@ public class PackageUtils {
         return classes;
     }
 
-    public static List<Class<?>> getClassesWithAnnotation(String packageName, Class<? extends Annotation> annotationClass) throws ClassNotFoundException, IOException {
-        List<Class<?>> classes = getClasses(packageName);
-
+    public static List<Class<?>> getClassesWithAnnotation(String packageName, Class<? extends Annotation> annotationClass){
         ArrayList<Class<?>> result = new ArrayList<Class<?>>();
-        
-        for(Class<?> clazz : classes) {
-            if (clazz.isAnnotationPresent(annotationClass)) {
-                result.add(clazz);
+        try{
+            List<Class<?>> classes = getClasses(packageName);
+            for(Class<?> c : classes) {
+                if (c.isAnnotationPresent(annotationClass)) {
+                    result.add(c);
+                }
             }
+        }catch(Exception e){
+        
         }
-
         return result;
     }
 }
