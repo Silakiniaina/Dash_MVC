@@ -3,6 +3,8 @@ package mg.dashFramework.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -11,44 +13,30 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
+import mg.dashFramework.annotation.Get;
+
+import mg.dashFramework.shared.Mapping;
+import mg.dashFramework.util.ClassUtils;
 
 public class FrontController extends HttpServlet {
-    private ArrayList<Class<?>> controllerClasses;
-    private boolean checked = false;
+    HashMap<String, Mapping> URLMapping;
 
-    // Class methods
-    private void initVariables() throws ClassNotFoundException, IOException {
-        String packageName = this.getInitParameter("package_name");
-        ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-        setControllerClasses(classes);
-        setChecked(true);
-    }
-
-    private void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    private void processRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-
+        String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
+        Mapping map = this.getURLMapping().get(requestURL);
         try {
-            out.println("<h1>Welcome to Dash-MVC</h1> <hr>");
-            out.println("<p>Looking for a web framework? You are in the right place...</p>");
-            out.println(
-                    "<p> Dash MVC is a Java-based web framework built on top of the Servlet API. It provides a lightweight alternative to Spring MVC, focusing on core functionalities. </p>");
-            out.println("<span>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a></span> <br><br>");
-            out.println("Your controllers :");
-            out.println("<ul>");
-
-            if (!isChecked()) {
-                initVariables();
+            out.println("<h1>Welcome to Dash MVC Framework </h1>");
+            out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a><br>");
+            if(map != null){
+                out.println("<b> Here is the method and class associated with your URL : </b><br>");
+                out.println("<u>className </u> : "+map.getClassName() +"<br>");
+                out.println("<u>methodName </u> : "+map.getMethodName()+"<br>");
+            }else{ 
+                out.println("<b>There is no method associated with the URL that you entered</b>");
             }
-
-            ArrayList<Class<?>> classes = getControllerClasses();
-
-            for (Class<?> clazz : classes) {
-                out.println("<li>" + clazz.getSimpleName() + "</li>");
-            }
-            out.println("</ul>");
         } catch (Exception e) {
-            out.println(e);
+            out.println(e.getMessage());
         }
     }
 
@@ -65,29 +53,20 @@ public class FrontController extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        try {
-            initVariables();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.setURLMapping(new HashMap<String, Mapping>());
+        String packageName = this.getInitParameter("controller_dir");
+        ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+        HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingAnnotationGet(classes);
+        this.setURLMapping(mapping);
     }
 
-    // Getters and setters
-    public boolean isChecked() {
-        return checked;
+    /* Getters */
+    public HashMap<String, Mapping> getURLMapping(){
+        return this.URLMapping;
     }
 
-    public void setChecked(boolean checked) {
-        this.checked = checked;
-    }
-
-    public ArrayList<Class<?>> getControllerClasses() {
-        return controllerClasses;
-    }
-
-    public void setControllerClasses(ArrayList<Class<?>> controllerClasses) {
-        this.controllerClasses = controllerClasses;
+    /* Setters */
+    public void setURLMapping(HashMap<String, Mapping> u){
+        this.URLMapping = u;
     }
 }
