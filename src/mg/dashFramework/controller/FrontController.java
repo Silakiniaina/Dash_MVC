@@ -34,6 +34,8 @@ public class FrontController extends HttpServlet {
                 out.println("<b> Here is the method and class associated with your URL : </b><br>");
                 out.println("<u>className </u> : "+map.getClassName() +"<br>");
                 out.println("<u>methodName </u> : "+map.getMethodName()+"<br>");
+                String str = (String)ClassUtils.invokeMethod(map.getClassName(),map.getMethodName());
+                out.println("<p>Output of the method :<b>"+str+"<b> </p>");
             }else{ 
                 out.println("<b>There is no method associated with the URL that you entered</b>");
             }
