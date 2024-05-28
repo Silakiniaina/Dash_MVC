@@ -13,4 +13,9 @@ public class MethodUtils{
         }
         return result;
     }
+
+    /* function get a method by his name in a class */
+    public static Method getMethodByName(Object o, String methName)throws Exception{
+        return o.getClass().getMethod(methName);
+    }
 }
