@@ -29,13 +29,9 @@ public class FrontController extends HttpServlet {
         PrintWriter out = response.getWriter();
 
         try {
-            out.println("<h1>Welcome to Dash-MVC</h1> <hr>");
-            out.println("<p>Looking for a web framework? You are in the right place...</p>");
-            out.println(
-                    "<p> Dash MVC is a Java-based web framework built on top of the Servlet API. It provides a lightweight alternative to Spring MVC, focusing on core functionalities. </p>");
-            out.println("<span>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a></span> <br><br>");
-            out.println("Your controllers :");
-            out.println("<ul>");
+            out.println("<h1>Welcome to Dash MVC Framework </h1>");
+            out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a></b>");
+            out.println("<b> Here are the list of the controllers : </b>");
 
             if (!isChecked()) {
                 initVariables();
