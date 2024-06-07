@@ -17,7 +17,7 @@ import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
 import mg.dashFramework.annotation.Get;
 
-import mg.dashFramework.shared.Mapping;
+import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
 
 public class FrontController extends HttpServlet {
