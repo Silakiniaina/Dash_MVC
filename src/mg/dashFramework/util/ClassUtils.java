@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.annotation.Annotation;
 
 import mg.dashFramework.annotation.Get;
-import mg.dashFramework.shared.Mapping;
+import mg.dashFramework.handler.url.Mapping;
 
 public class ClassUtils{
 
