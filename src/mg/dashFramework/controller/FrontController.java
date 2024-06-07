@@ -17,8 +17,9 @@ import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
 import mg.dashFramework.annotation.Get;
 
-import mg.dashFramework.shared.Mapping;
+import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
+import mg.dashFramework.handler.views.ModelView;
 
 public class FrontController extends HttpServlet {
     HashMap<String, Mapping> URLMapping;
@@ -28,16 +29,23 @@ public class FrontController extends HttpServlet {
         String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
         Mapping map = this.getURLMapping().get(requestURL);
         try {
-            out.println("<h1>Welcome to Dash MVC Framework </h1>");
-            out.println("<p>Your URL : <a href = \' \'> " + request.getRequestURI() + "</a><br>");
             if(map != null){
-                out.println("<b> Here is the method and class associated with your URL : </b><br>");
-                out.println("<u>className </u> : "+map.getClassName() +"<br>");
-                out.println("<u>methodName </u> : "+map.getMethodName()+"<br>");
-                String str = (String)ClassUtils.invokeMethod(map.getClassName(),map.getMethodName());
-                out.println("<p>Output of the method :<b>"+str+"<b> </p>");
+                Object obj = ClassUtils.invokeMethod(map.getClassName(),map.getMethodName());
+                if (obj instanceof String) {
+                    out.println(obj.toString());
+                } else if (obj instanceof ModelView) {
+                    ModelView modelView = ((ModelView)obj);
+                    HashMap<String, Object> data = modelView.getData();
+
+                    for (String key : data.keySet()) {
+                        request.setAttribute(key, data.get(key));
+                    }
+                    request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
+                } else {
+                    
+                }
             }else{ 
-                out.println("<b>There is no method associated with the URL that you entered</b>");
+               
             }
         } catch (Exception e) {
             out.println(e.getMessage());

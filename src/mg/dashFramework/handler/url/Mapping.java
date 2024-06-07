@@ -1,4 +1,4 @@
-package mg.dashFramework.shared;
+package mg.dashFramework.handler.url;
 
 public class Mapping{
     private String className;
