@@ -16,7 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.annotation.Controller;
 import mg.dashFramework.annotation.Get;
-
+import mg.dashFramework.handler.exeption.UnknownReturnTypeException;
+import mg.dashFramework.handler.exeption.UrlNotFoundException;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
 import mg.dashFramework.handler.views.ModelView;
@@ -42,10 +43,10 @@ public class FrontController extends HttpServlet {
                     }
                     request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
                 } else {
-                    
+                    throw new UnknownReturnTypeException();
                 }
             }else{ 
-               
+                throw new UrlNotFoundException();
             }
         } catch (Exception e) {
             out.println(e.getMessage());
