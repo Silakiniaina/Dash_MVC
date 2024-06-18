@@ -21,6 +21,7 @@ import mg.dashFramework.handler.exeption.UnknownReturnTypeException;
 import mg.dashFramework.handler.exeption.UrlNotFoundException;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
+import mg.dashFramework.util.MethodUtils;
 import mg.dashFramework.handler.views.ModelView;
 
 public class FrontController extends HttpServlet {
@@ -38,7 +39,7 @@ public class FrontController extends HttpServlet {
         }
         try {
             if(map != null){
-                Object obj = ClassUtils.invokeMethod(map.getClassName(),map.getMethodName());
+                Object obj = MethodUtils.executeRequestMethod(map, request);
                 if (obj instanceof String) {
                     out.println(obj.toString());
                 } else if (obj instanceof ModelView) {
@@ -56,6 +57,7 @@ public class FrontController extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url not Found");
             }
         } catch (Exception e) {
+            e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
