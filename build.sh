@@ -19,5 +19,5 @@ jar -cf "../dash_mvc.jar" "mg"
 cd ..
 
 # Uncomment these line below and change the path of your test directory to copy directly the jar file to you lib and remove it after
-# cp "dash_mvc.jar" "../Test_dash/lib/"
-# rm "dash_mvc.jar"
+cp "dash_mvc.jar" "../Test_dash/lib/"
+rm "dash_mvc.jar"

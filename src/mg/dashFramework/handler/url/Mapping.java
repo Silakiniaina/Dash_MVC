@@ -1,5 +1,7 @@
 package mg.dashFramework.handler.url;
 
+import java.lang.reflect.Method;
+
 public class Mapping{
     private String className;
     private String methodName;
@@ -8,6 +10,11 @@ public class Mapping{
     public Mapping(String className, String methodName){
         this.setClassName(className);
         this.setMethodName(methodName);
+    }
+
+    /* Function to get the method instance in the mapping */
+    public Method getMethod()throws Exception{
+        return this.getClass().getDeclaredMethod(this.getMethodName());
     }
     
     /* Getters */
