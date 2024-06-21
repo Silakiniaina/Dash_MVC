@@ -1,29 +1,31 @@
 package mg.dashFramework.handler.url;
 
+import java.lang.reflect.Method;
+
 public class Mapping{
     private String className;
-    private String methodName;
+    private Method meth;
 
     /* Constructor */
-    public Mapping(String className, String methodName){
+    public Mapping(String className, Method m){
         this.setClassName(className);
-        this.setMethodName(methodName);
+        this.setMethod(m);
     }
     
     /* Getters */
     public String getClassName(){
         return this.className;
     }
-    public String getMethodName(){
-        return this.methodName;
+    public Method getMethod(){
+        return this.meth;
     }
 
     /* Setters */
     public void setClassName(String className){
         this.className = className;
     }
-    public void setMethodName(String methodName){
-        this.methodName = methodName;
+    public void setMethod(Method m){
+        this.meth = m;
     }
 
 }

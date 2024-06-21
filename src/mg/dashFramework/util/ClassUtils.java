@@ -29,7 +29,7 @@ public class ClassUtils{
             for (Method m : listMethods){
                 if(m.isAnnotationPresent(Get.class)){
                     String URL = m.getAnnotation(Get.class).value();
-                    Mapping map = new Mapping(c.getName(), m.getName());
+                    Mapping map = new Mapping(c.getName(), m);
                     result.put(URL, map);
                 }
             }
