@@ -27,17 +27,13 @@ public class ObjectUtils {
             throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             NoSuchMethodException, SecurityException, NoSuchFieldException {
         Object instance = classType.getConstructor().newInstance();
-
         Enumeration<String> requestParams = request.getParameterNames();
-
         String attributeName = null, className = null, requestParamName = null, regex = null;
-
         className = annotationValue.split("\\.")[0];
         regex = className + ".*";
 
         while (requestParams.hasMoreElements()) {
             requestParamName = requestParams.nextElement();
-
             if (requestParamName.matches(regex)) {
                 attributeName = requestParamName.split("\\.")[1];
                 setObjectAttributesValues(instance, attributeName, request.getParameter(requestParamName));

@@ -20,7 +20,9 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException {
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)
+            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+            InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethod();
@@ -49,6 +51,7 @@ public class ReflectUtils {
         }
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }
+
 
     public static Class<?>[] getArgsClasses(Object... args) {
         Class<?>[] classes = new Class[args.length];
