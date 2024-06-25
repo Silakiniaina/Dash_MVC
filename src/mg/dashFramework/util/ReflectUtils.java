@@ -20,19 +20,14 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-            InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException {
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException {
         List<Object> objects = new ArrayList<>();
-
         Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethod();
-
         for (Parameter parameter : method.getParameters()) {
             Class<?> clazz = parameter.getType();
             Object object = ObjectUtils.getDefaultValue(clazz);
             String strValue = null;
-
             if (ObjectUtils.isPrimitive(clazz)) {
                 if (parameter.isAnnotationPresent(RequestParam.class)) {
                     strValue = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
@@ -50,22 +45,18 @@ public class ReflectUtils {
                     object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
                 }
             }
-
             objects.add(object);
         }
-
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }
 
     public static Class<?>[] getArgsClasses(Object... args) {
         Class<?>[] classes = new Class[args.length];
         int i = 0;
-
         for (Object object : args) {
             classes[i] = object.getClass();
             i++;
         }
-
         return classes;
     }
 
