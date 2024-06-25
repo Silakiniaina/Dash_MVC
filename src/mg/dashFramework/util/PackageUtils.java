@@ -20,7 +20,7 @@ public class PackageUtils {
         }
 
         File packageDir = new File(resource.getFile().replace("%20", " "));
-        
+
         for (File file : packageDir.listFiles()) {
             if (file.isDirectory()) {
                 classes.addAll(PackageUtils.getClasses(packageName + "." + file.getName()));

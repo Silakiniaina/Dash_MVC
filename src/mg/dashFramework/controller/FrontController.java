@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import mg.dashFramework.util.PackageUtils;
+import mg.dashFramework.util.ReflectUtils;
 import mg.dashFramework.annotation.Controller;
 import mg.dashFramework.annotation.Get;
 import mg.dashFramework.handler.exeption.PackageScanNotFoundException;
@@ -22,6 +23,7 @@ import mg.dashFramework.handler.exeption.UrlNotFoundException;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
 import mg.dashFramework.util.MethodUtils;
+import mg.dashFramework.util.ObjectUtils;
 import mg.dashFramework.handler.views.ModelView;
 
 public class FrontController extends HttpServlet {
@@ -39,13 +41,12 @@ public class FrontController extends HttpServlet {
         }
         try {
             if(map != null){
-                Object obj = MethodUtils.executeRequestMethod(map, request);
+                Object obj = ReflectUtils.executeRequestMethod(map, request);
                 if (obj instanceof String) {
                     out.println(obj.toString());
                 } else if (obj instanceof ModelView) {
                     ModelView modelView = ((ModelView)obj);
                     HashMap<String, Object> data = modelView.getData();
-
                     for (String key : data.keySet()) {
                         request.setAttribute(key, data.get(key));
                     }
