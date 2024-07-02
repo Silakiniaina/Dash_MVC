@@ -34,10 +34,9 @@ public class FrontController extends HttpServlet {
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
         Mapping map = this.getURLMapping().get(requestURL);
+        response.setContentType("text/html");
         if(error != null){
-            out.println("<p>" + error.getMessage() + "</p>");
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, error.getMessage());
-            return;
+           out.println(error.getMessage());
         }
         try {
             if(map != null){
@@ -57,9 +56,8 @@ public class FrontController extends HttpServlet {
             }else{ 
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url not Found");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }catch (Exception e) {
+           out.println(e.getMessage());
         }
     }
 
