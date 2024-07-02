@@ -1,5 +1,7 @@
 package mg.dashFramework.controller;
 
+import java.util.Enumeration;
+
 import jakarta.servlet.http.HttpSession;
 
 public class MySession {
@@ -21,6 +23,13 @@ public class MySession {
 
     public void delete(String key){
         this.getSession().removeAttribute(key);
+    }
+
+    public void clear(){
+        Enumeration<String> keys = this.getSession().getAttributeNames();
+        while (keys.hasMoreElements()) {
+            this.delete(keys.nextElement());
+        }
     }
 
     /* Setters */
