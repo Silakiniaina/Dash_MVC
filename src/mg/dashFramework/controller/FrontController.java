@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import jakarta.servlet.ServletException;
+
+import com.google.gson.Gson;
+
+import jakarta.servlet.ServletException;    
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,9 +15,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.dashFramework.util.PackageUtils;
 import mg.dashFramework.util.ReflectUtils;
 import mg.dashFramework.annotation.Controller;
+import mg.dashFramework.annotation.RestApi;
 import mg.dashFramework.handler.exeption.PackageScanNotFoundException;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
+import mg.dashFramework.util.MethodUtils;
 import mg.dashFramework.handler.views.ModelView;
 
 public class FrontController extends HttpServlet {
@@ -26,7 +31,7 @@ public class FrontController extends HttpServlet {
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
         Mapping map = this.getURLMapping().get(requestURL);
-        response.setContentType("text/html");
+        response.setContentType("text/json");
 
         if(this.getMySession() == null) this.setMySession(new MySession(request.getSession()));
         
