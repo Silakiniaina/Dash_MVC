@@ -46,8 +46,12 @@ public class FrontController extends HttpServlet {
                 }else if (obj instanceof ModelView){
                     ModelView modelView = ((ModelView)obj);
                     HashMap<String, Object> data = modelView.getData();
-                    for (String key : data.keySet()) {
-                        request.setAttribute(key, data.get(key));
+                    if(MethodUtils.methodHasAnnotation(map.getMethod(), RestApi.class)){
+                        out.println(new Gson().toJson(data));
+                    }else{
+                        for (String key : data.keySet()) {
+                            request.setAttribute(key, data.get(key));
+                        }
                     }
                     request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
                 }else{
