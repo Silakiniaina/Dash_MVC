@@ -33,12 +33,19 @@ public class MethodUtils{
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethod();
+        int paramNumber = method.getParameters().length;
+        int countAnnotation = 0;
         for(Parameter parameter : method.getParameters()) {
             Object object = "";
             if (parameter.isAnnotationPresent(RequestParam.class)) {
                 object = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
+                countAnnotation++;
             }
             objects.add(object);
+        }
+        if(countAnnotation != paramNumber){
+            int n = paramNumber-countAnnotation;
+            throw new Exception("ETU002611 : Tous les parametres de la fonction "+method.getName()+" doivent etre anotter , il y : "+n+" parametre sans annotation");
         }
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }

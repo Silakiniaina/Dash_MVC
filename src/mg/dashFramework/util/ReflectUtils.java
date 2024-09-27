@@ -21,10 +21,12 @@ public class ReflectUtils {
     }
 
     public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException {
+            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException,Exception {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethod();
+        int paramNumber = method.getParameters().length;
+        int countAnnotation = 0;
         for (Parameter parameter : method.getParameters()) {
             Class<?> clazz = parameter.getType();
             Object object = ObjectUtils.getDefaultValue(clazz);
@@ -33,6 +35,7 @@ public class ReflectUtils {
                 if (parameter.isAnnotationPresent(RequestParam.class)) {
                     strValue = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
                     object = strValue != null ? ObjectUtils.castObject(strValue, clazz) : object;
+                    countAnnotation++;
                 } else {
                     String paramName = parameter.getName();
                     strValue = request.getParameter(paramName);
@@ -44,9 +47,14 @@ public class ReflectUtils {
                 if (parameter.isAnnotationPresent(RequestParam.class)) {
                     String annotationValue = parameter.getAnnotation(RequestParam.class).value();
                     object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
+                    countAnnotation++;
                 }
             }
             objects.add(object);
+        }
+        if(countAnnotation != paramNumber){
+            int n = paramNumber-countAnnotation;
+            throw new Exception("ETU002611 : Tous les parametres de la fonction "+method.getName()+" doivent etre anotter , il y a: "+n+" parametre sans annotation");
         }
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }
