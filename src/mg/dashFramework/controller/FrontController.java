@@ -39,27 +39,7 @@ public class FrontController extends HttpServlet {
             out.println(error.getMessage());
         }
         try {
-            if(map != null){
-                Object obj = ReflectUtils.executeRequestMethod(map, request);
-                if (obj instanceof String) {
-                    out.println(obj.toString());
-                }else if (obj instanceof ModelView){
-                    ModelView modelView = ((ModelView)obj);
-                    HashMap<String, Object> data = modelView.getData();
-                    if(MethodUtils.methodHasAnnotation(map.getMethod(), RestApi.class)){
-                        out.println(new Gson().toJson(data));
-                    }else{
-                        for (String key : data.keySet()) {
-                            request.setAttribute(key, data.get(key));
-                        }
-                    }
-                    request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
-                }else{
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown return type");
-                }
-            }else{ 
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url not Found");
-            }
+            out.println(new Gson().toJson(map));
         }catch (Exception e) {
             out.println(e.getMessage());
         }
@@ -85,7 +65,7 @@ public class FrontController extends HttpServlet {
                 throw new PackageScanNotFoundException();
             }
             ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-            HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingAnnotationGet(classes);
+            HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingUrlAnnotation(classes);
             this.setURLMapping(mapping);
         }catch(Exception e){
             error = e;

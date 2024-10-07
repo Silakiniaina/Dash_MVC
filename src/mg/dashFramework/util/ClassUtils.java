@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.lang.reflect.Method;
 
 import mg.dashFramework.annotation.Get;
+import mg.dashFramework.annotation.RestApi;
+import mg.dashFramework.annotation.Url;
 import mg.dashFramework.handler.url.Mapping;
 
 public class ClassUtils{
@@ -21,15 +23,21 @@ public class ClassUtils{
 
 
     /* function to get the HashMap of the method having an annotation */
-    public static HashMap<String, Mapping> includeMethodHavingAnnotationGet(ArrayList<Class<?>> listClasses){
+    public static HashMap<String, Mapping> includeMethodHavingUrlAnnotation(ArrayList<Class<?>> listClasses)throws Exception{
         HashMap<String, Mapping> result = new HashMap<String, Mapping>();
         for (Class<?> c : listClasses){
             ArrayList<Method> listMethods = ClassUtils.getListMethodsClass(c);
             for (Method m : listMethods){
-                if(m.isAnnotationPresent(Get.class)){
-                    String URL = m.getAnnotation(Get.class).value();
+                String url = "";
+                if(m.isAnnotationPresent(Url.class)){
+                    url = m.getAnnotation(Url.class).value();
+                }else if(m.isAnnotationPresent(RestApi.class)){
+                    url = m.getAnnotation(RestApi.class).value();
+                }
+
+                if(url != ""){
                     Mapping map = new Mapping(c.getName(), m);
-                    result.put(URL, map);
+                    result.put(url, map);
                 }
             }
         }
