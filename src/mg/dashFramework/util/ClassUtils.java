@@ -2,6 +2,9 @@ package mg.dashFramework.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import com.google.gson.Gson;
+
 import java.lang.reflect.Method;
 
 import mg.dashFramework.annotation.Get;
@@ -31,8 +34,6 @@ public class ClassUtils{
                 String url = "";
                 if(m.isAnnotationPresent(Url.class)){
                     url = m.getAnnotation(Url.class).value();
-                }else if(m.isAnnotationPresent(RestApi.class)){
-                    url = m.getAnnotation(RestApi.class).value();
                 }
 
                 if(url != ""){

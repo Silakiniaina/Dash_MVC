@@ -29,7 +29,7 @@ public class FrontController extends HttpServlet {
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-        String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
+        String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
         Mapping map = this.getURLMapping().get(requestURL);
         response.setContentType("text/json");
 
@@ -39,7 +39,27 @@ public class FrontController extends HttpServlet {
             out.println(error.getMessage());
         }
         try {
-            out.println(new Gson().toJson(map));
+            if(map != null){
+                Object obj = ReflectUtils.executeRequestMethod(map,request);
+                if(obj instanceof String){
+                    out.println((String)obj);
+                }else if(obj instanceof ModelView){
+                    ModelView mv = (ModelView)obj;
+                    HashMap<String, Object> data = mv.getData();
+                    if(map.getMethod().isAnnotationPresent(RestApi.class)){
+                        out.println(new Gson().toJson(data));
+                    }else{
+                        for(String key : data.keySet()){
+                            request.setAttribute(key, data.get(key));
+                        }
+                        request.getRequestDispatcher(mv.getUrl()).forward(request, response);
+                    }
+                }else{
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unkown return type");
+                }
+            }else{
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url : "+requestURL +" not found");
+            }
         }catch (Exception e) {
             out.println(e.getMessage());
         }
