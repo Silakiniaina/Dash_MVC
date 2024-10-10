@@ -3,19 +3,15 @@ package mg.dashFramework.util;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.google.gson.Gson;
-
 import java.lang.reflect.Method;
 
-import mg.dashFramework.annotation.Get;
-import mg.dashFramework.annotation.RestApi;
 import mg.dashFramework.annotation.Url;
 import mg.dashFramework.handler.url.Mapping;
 
 public class ClassUtils{
 
     /* Function to get all the methods in a class */
-    public static ArrayList<Method> getListMethodsClass(Class c){
+    public static ArrayList<Method> getListMethodsClass(@SuppressWarnings("rawtypes") Class c){
         ArrayList<Method> result = new ArrayList<Method>();
         Method[] ls = c.getDeclaredMethods();
         for(int i=0; i<ls.length; i++){
