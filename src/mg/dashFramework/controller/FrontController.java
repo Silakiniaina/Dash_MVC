@@ -26,7 +26,7 @@ public class FrontController extends HttpServlet {
     private Exception error;
     private MySession mySession;
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
         Mapping map = this.getURLMapping().get(requestURL);
@@ -67,12 +67,14 @@ public class FrontController extends HttpServlet {
     // Override methods
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req, resp);
+        String verb = "GET";
+        processRequest(req, resp, verb);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req, resp);
+        String verb = "POST";
+        processRequest(req, resp, verb);
     }
 
     @Override

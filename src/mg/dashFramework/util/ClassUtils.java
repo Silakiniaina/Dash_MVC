@@ -33,7 +33,7 @@ public class ClassUtils{
                 }
 
                 if(url != ""){
-                    Mapping map = new Mapping(c.getName(), m);
+                    Mapping map = new Mapping(c.getName());
                     result.put(url, map);
                 }
             }
