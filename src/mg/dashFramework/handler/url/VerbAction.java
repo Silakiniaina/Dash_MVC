@@ -27,4 +27,15 @@ public class VerbAction {
     public void setVerb(String verb) {
         this.verb = verb;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        boolean result = false;
+        if(obj == null) result = true;
+
+        if(obj instanceof VerbAction && this.getVerb().equals(((VerbAction)obj).getVerb()) && this.getMethod().equals(((VerbAction)obj).getMethod())){
+            result = true;
+        }
+        return result;
+    }
 }

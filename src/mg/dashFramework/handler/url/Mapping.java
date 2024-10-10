@@ -1,15 +1,15 @@
 package mg.dashFramework.handler.url;
 
 import java.util.Set;
+import java.util.HashSet;
 
 public class Mapping{
     private String className;
-    private Set<VerbAction> listVerbActions;
+    private Set<VerbAction> listVerbActions = new HashSet<>();
 
     /* Constructor */
-    public Mapping(String className, Set<VerbAction> list){
+    public Mapping(String className){
         this.setClassName(className);
-        this.setListVerbActions(list);
     }
     
     /* Getters */
