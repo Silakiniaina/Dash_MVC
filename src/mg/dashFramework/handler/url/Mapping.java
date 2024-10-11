@@ -1,6 +1,7 @@
 package mg.dashFramework.handler.url;
 
 import java.util.Set;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 
 public class Mapping{
@@ -28,4 +29,15 @@ public class Mapping{
         this.listVerbActions = ls;
     }
 
+    /*Getting the method associated with the verb */
+    public Method getMethodByVerb(String verb){
+        Method m = null; 
+        for(VerbAction vb : this.getListVerbActions()){
+            if(vb.getVerb().equals(verb)){
+                m = vb.getMethod();
+                break;
+            }
+        }
+        return m;
+    }
 }
