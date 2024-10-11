@@ -7,26 +7,28 @@ public class VerbAction {
     private String verb;
 
     /* Constructor */
-    public VerbAction(){}
-    
-    public VerbAction(String verb, Method m){
+    public VerbAction() {
+    }
+
+    public VerbAction(String verb, Method m) {
         this.setVerb(verb);
         this.setMethod(m);
     }
 
-    
-    /* Getters  */
+    /* Getters */
     public Method getMethod() {
         return method;
     }
+
     public String getVerb() {
         return verb;
     }
-    
+
     /* Setters */
     public void setMethod(Method method) {
         this.method = method;
     }
+
     public void setVerb(String verb) {
         this.verb = verb;
     }
@@ -34,9 +36,10 @@ public class VerbAction {
     @Override
     public boolean equals(Object obj) {
         boolean result = false;
-        if(obj == null) result = true;
+        if (obj == null)
+            result = true;
 
-        if(obj instanceof VerbAction && this.getVerb().equals(((VerbAction)obj).getVerb()) && this.getMethod().equals(((VerbAction)obj).getMethod())){
+        if (obj instanceof VerbAction && this.getVerb().equals(((VerbAction) obj).getVerb())) {
             result = true;
         }
         return result;
@@ -46,6 +49,5 @@ public class VerbAction {
     public int hashCode() {
         return 2611;
     }
-
 
 }

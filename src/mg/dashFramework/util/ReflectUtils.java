@@ -24,7 +24,7 @@ public class ReflectUtils {
             throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException,Exception {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
-        Method method = mapping.getListVerbActions().get
+        Method method = mapping.getMethodByVerb(verb);
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
         for (Parameter parameter : method.getParameters()) {

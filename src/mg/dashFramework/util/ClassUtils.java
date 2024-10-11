@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import java.lang.reflect.Method;
 
+import mg.dashFramework.annotation.Post;
 import mg.dashFramework.annotation.Url;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.handler.url.VerbAction;
@@ -37,10 +38,14 @@ public class ClassUtils {
                 action.setVerb("GET");
                 action.setMethod(m);
 
-                if (url != "" && result.containsKey(url)) {
+                if(m.isAnnotationPresent(Post.class)){
+                    action.setVerb("POST");
+                }
 
-                    if (!result.get(url).getListVerbActions().add(action))
-                        throw new Exception("Duplicate VerbAction");
+                if (url != "" && result.containsKey(url)) {
+                    throw new Exception("URL efa misy oooo");
+                    // if (!result.get(url).getListVerbActions().add(action))
+                    //     throw new Exception("Duplicate VerbAction");
                 } else if (url != "" && !result.containsKey(url)) {
                     Mapping map = new Mapping(c.getName());
                     map.getListVerbActions().add(action);
