@@ -7,10 +7,13 @@ public class VerbAction {
     private String verb;
 
     /* Constructor */
+    public VerbAction(){}
+    
     public VerbAction(String verb, Method m){
         this.setVerb(verb);
         this.setMethod(m);
     }
+
     
     /* Getters  */
     public Method getMethod() {
@@ -38,4 +41,11 @@ public class VerbAction {
         }
         return result;
     }
+
+    @Override
+    public int hashCode() {
+        return 2611;
+    }
+
+
 }

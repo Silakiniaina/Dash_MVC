@@ -20,11 +20,11 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request)
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb)
             throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException,Exception {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
-        Method method = mapping.getMethod();
+        Method method = mapping.getListVerbActions().get
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
         for (Parameter parameter : method.getParameters()) {
