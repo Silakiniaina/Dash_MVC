@@ -1,4 +1,4 @@
-package mg.dashFramework.handler.views;
+package mg.dash.mvc.handler.views;
 
 import java.util.HashMap;
 

@@ -1,4 +1,4 @@
-package mg.dashFramework.controller;
+package mg.dash.mvc.controller;
 
 import java.util.Enumeration;
 

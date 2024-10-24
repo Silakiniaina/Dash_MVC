@@ -1,4 +1,4 @@
-package mg.dashFramework.handler.exeption;
+package mg.dash.mvc.handler.exeption;
 
 
 public class UrlNotFoundException extends Exception{

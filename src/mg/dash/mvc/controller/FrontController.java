@@ -1,4 +1,4 @@
-package mg.dashFramework.controller;
+package mg.dash.mvc.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,15 +11,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import mg.dashFramework.util.PackageUtils;
-import mg.dashFramework.util.ReflectUtils;
-import mg.dashFramework.annotation.Controller;
-import mg.dashFramework.annotation.RestApi;
-import mg.dashFramework.handler.exeption.PackageScanNotFoundException;
-import mg.dashFramework.handler.url.Mapping;
-import mg.dashFramework.util.ClassUtils;
-import mg.dashFramework.handler.views.ModelView;
+import mg.dash.mvc.annotation.Controller;
+import mg.dash.mvc.annotation.RestApi;
+import mg.dash.mvc.handler.exeption.PackageScanNotFoundException;
+import mg.dash.mvc.handler.url.Mapping;
+import mg.dash.mvc.handler.views.ModelView;
+import mg.dash.mvc.util.ClassUtils;
+import mg.dash.mvc.util.PackageUtils;
+import mg.dash.mvc.util.ReflectUtils;
 
 public class FrontController extends HttpServlet {
     HashMap<String, Mapping> URLMapping;
