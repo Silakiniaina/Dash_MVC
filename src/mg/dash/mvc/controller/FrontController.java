@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.dash.mvc.annotation.Controller;
 import mg.dash.mvc.annotation.RestApi;
 import mg.dash.mvc.handler.exeption.PackageScanNotFoundException;
+import mg.dash.mvc.handler.exeption.ErrorPage;
 import mg.dash.mvc.handler.url.Mapping;
 import mg.dash.mvc.handler.views.ModelView;
 import mg.dash.mvc.util.ClassUtils;
@@ -35,7 +36,8 @@ public class FrontController extends HttpServlet {
         if(this.getMySession() == null) this.setMySession(new MySession(request.getSession()));
         
         if(error != null){
-            out.println(error.getMessage());
+            response.setContentType("text/html;charset=UTF-8");
+            ErrorPage.displayError(out, error);
         }else{
             try {
                 if(map != null){
