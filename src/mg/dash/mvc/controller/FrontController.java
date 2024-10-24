@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.dash.mvc.annotation.Controller;
 import mg.dash.mvc.annotation.RestApi;
 import mg.dash.mvc.handler.exeption.PackageScanNotFoundException;
+import mg.dash.mvc.handler.exeption.UrlNotFoundException;
 import mg.dash.mvc.handler.exeption.ErrorPage;
 import mg.dash.mvc.handler.url.Mapping;
 import mg.dash.mvc.handler.views.ModelView;
@@ -48,7 +49,7 @@ public class FrontController extends HttpServlet {
             if(map == null) {
                 response.setContentType("text/html;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                Exception notFoundException = new Exception("Resource not found: " + requestURL);
+                UrlNotFoundException notFoundException = new UrlNotFoundException("Resource not found: " + requestURL);
                 ErrorPage.displayError(out, notFoundException, 404);
                 return;
             }
