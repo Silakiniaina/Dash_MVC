@@ -29,10 +29,10 @@ public class MethodUtils{
     }
 
     /* Function to execute the method with parameters */
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request) throws Exception {
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request,String verb) throws Exception {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
-        Method method = mapping.getMethod();
+        Method method = mapping.getMethodByVerb(verb);
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
         for(Parameter parameter : method.getParameters()) {

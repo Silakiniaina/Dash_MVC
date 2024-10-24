@@ -1,31 +1,43 @@
 package mg.dashFramework.handler.url;
 
+import java.util.Set;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 
 public class Mapping{
     private String className;
-    private Method meth;
+    private Set<VerbAction> listVerbActions = new HashSet<>();
 
     /* Constructor */
-    public Mapping(String className, Method m){
+    public Mapping(String className){
         this.setClassName(className);
-        this.setMethod(m);
     }
     
     /* Getters */
     public String getClassName(){
         return this.className;
     }
-    public Method getMethod(){
-        return this.meth;
+    public Set<VerbAction> getListVerbActions(){
+        return this.listVerbActions;
     }
 
     /* Setters */
     public void setClassName(String className){
         this.className = className;
     }
-    public void setMethod(Method m){
-        this.meth = m;
+    public void setListVerbActions(Set<VerbAction> ls){
+        this.listVerbActions = ls;
     }
 
+    /*Getting the method associated with the verb */
+    public Method getMethodByVerb(String verb){
+        Method m = null; 
+        for(VerbAction vb : this.getListVerbActions()){
+            if(vb.getVerb().equals(verb)){
+                m = vb.getMethod();
+                break;
+            }
+        }
+        return m;
+    }
 }

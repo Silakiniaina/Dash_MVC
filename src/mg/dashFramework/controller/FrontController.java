@@ -19,7 +19,6 @@ import mg.dashFramework.annotation.RestApi;
 import mg.dashFramework.handler.exeption.PackageScanNotFoundException;
 import mg.dashFramework.handler.url.Mapping;
 import mg.dashFramework.util.ClassUtils;
-import mg.dashFramework.util.MethodUtils;
 import mg.dashFramework.handler.views.ModelView;
 
 public class FrontController extends HttpServlet {
@@ -27,10 +26,12 @@ public class FrontController extends HttpServlet {
     private Exception error;
     private MySession mySession;
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response)throws ServletException, IOException {
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-        String requestURL = request.getRequestURI().substring(request.getContextPath().length() + 1); 
+        String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
+        out.println(new Gson().toJson(this.getURLMapping()));
         Mapping map = this.getURLMapping().get(requestURL);
+        out.println(new Gson().toJson(map));
         response.setContentType("text/json");
 
         if(this.getMySession() == null) this.setMySession(new MySession(request.getSession()));
@@ -40,25 +41,25 @@ public class FrontController extends HttpServlet {
         }
         try {
             if(map != null){
-                Object obj = ReflectUtils.executeRequestMethod(map, request);
-                if (obj instanceof String) {
-                    out.println(obj.toString());
-                }else if (obj instanceof ModelView){
-                    ModelView modelView = ((ModelView)obj);
-                    HashMap<String, Object> data = modelView.getData();
-                    if(MethodUtils.methodHasAnnotation(map.getMethod(), RestApi.class)){
+                Object obj = ReflectUtils.executeRequestMethod(map,request,verb);
+                if(obj instanceof String){
+                    out.println((String)obj);
+                }else if(obj instanceof ModelView){
+                    ModelView mv = (ModelView)obj;
+                    HashMap<String, Object> data = mv.getData();
+                    if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)){
                         out.println(new Gson().toJson(data));
                     }else{
-                        for (String key : data.keySet()) {
+                        for(String key : data.keySet()){
                             request.setAttribute(key, data.get(key));
                         }
+                        request.getRequestDispatcher(mv.getUrl()).forward(request, response);
                     }
-                    request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
                 }else{
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unknown return type");
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unkown return type");
                 }
-            }else{ 
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url not Found");
+            }else{
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url : "+requestURL +" not found");
             }
         }catch (Exception e) {
             out.println(e.getMessage());
@@ -68,12 +69,14 @@ public class FrontController extends HttpServlet {
     // Override methods
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req, resp);
+        String verb = "GET";
+        processRequest(req, resp, verb);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        processRequest(req, resp);
+        String verb = "POST";
+        processRequest(req, resp, verb);
     }
 
     @Override
@@ -85,7 +88,7 @@ public class FrontController extends HttpServlet {
                 throw new PackageScanNotFoundException();
             }
             ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-            HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingAnnotationGet(classes);
+            HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingUrlAnnotation(classes);
             this.setURLMapping(mapping);
         }catch(Exception e){
             error = e;
