@@ -29,28 +29,28 @@ public class ClassUtils{
         for (Class<?> c : listClasses) {
             ArrayList<Method> listMethods = ClassUtils.getListMethodsClass(c);
             for (Method m : listMethods) {
-                String url = "";
                 if (m.isAnnotationPresent(Url.class)) {
-                    url = m.getAnnotation(Url.class).value();
+                    String url = m.getAnnotation(Url.class).value();
+                    VerbAction action = new VerbAction();
+                    action.setVerb("GET");
+                    action.setMethod(m);
+    
+                    if(m.isAnnotationPresent(Post.class)){
+                        action.setVerb("POST");
+                    }
+    
+                    if (result.containsKey(url)) {
+                        //throw new Exception("URL efa misy oooo");
+                        if (!result.get(url).getListVerbActions().add(action)){
+                            throw new Exception("Duplicate VerbAction");
+                        }
+                    } else if (!result.containsKey(url)) {
+                        Mapping map = new Mapping(c.getName());
+                        map.getListVerbActions().add(action);
+                        result.put(url,map);
+                    }
                 }
 
-                VerbAction action = new VerbAction();
-                action.setVerb("GET");
-                action.setMethod(m);
-
-                if(m.isAnnotationPresent(Post.class)){
-                    action.setVerb("POST");
-                }
-
-                if (url != "" && result.containsKey(url)) {
-                    throw new Exception("URL efa misy oooo");
-                    // if (!result.get(url).getListVerbActions().add(action))
-                    //     throw new Exception("Duplicate VerbAction");
-                } else if (url != "" && !result.containsKey(url)) {
-                    Mapping map = new Mapping(c.getName());
-                    map.getListVerbActions().add(action);
-                    result.put(url,map);
-                }
             }
         }
         return result;

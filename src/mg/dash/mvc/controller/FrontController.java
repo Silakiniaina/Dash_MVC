@@ -28,40 +28,36 @@ public class FrontController extends HttpServlet {
     private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb)throws ServletException, IOException {
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
-        out.println(new Gson().toJson(this.getURLMapping()));
+        //out.println(new Gson().toJson(this.getURLMapping()));
         Mapping map = this.getURLMapping().get(requestURL);
-        out.println(new Gson().toJson(map));
         response.setContentType("text/json");
 
         if(this.getMySession() == null) this.setMySession(new MySession(request.getSession()));
         
         if(error != null){
             out.println(error.getMessage());
-        }
-        try {
-            if(map != null){
-                Object obj = ReflectUtils.executeRequestMethod(map,request,verb);
-                if(obj instanceof String){
-                    out.println((String)obj);
-                }else if(obj instanceof ModelView){
-                    ModelView mv = (ModelView)obj;
-                    HashMap<String, Object> data = mv.getData();
-                    if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)){
-                        out.println(new Gson().toJson(data));
-                    }else{
-                        for(String key : data.keySet()){
-                            request.setAttribute(key, data.get(key));
+        }else{
+            try {
+                if(map != null){
+                    Object obj = ReflectUtils.executeRequestMethod(map,request,verb);
+                    if(obj instanceof String){
+                        out.println((String)obj);
+                    }else if(obj instanceof ModelView){
+                        ModelView mv = (ModelView)obj;
+                        HashMap<String, Object> data = mv.getData();
+                        if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)){
+                            out.println(new Gson().toJson(data));
+                        }else{
+                            for(String key : data.keySet()){
+                                request.setAttribute(key, data.get(key));
+                            }
+                            request.getRequestDispatcher(mv.getUrl()).forward(request, response);
                         }
-                        request.getRequestDispatcher(mv.getUrl()).forward(request, response);
                     }
-                }else{
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unkown return type");
                 }
-            }else{
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Url : "+requestURL +" not found");
+            }catch (Exception e) {
+                out.println(e.getMessage());
             }
-        }catch (Exception e) {
-            out.println(e.getMessage());
         }
     }
 
