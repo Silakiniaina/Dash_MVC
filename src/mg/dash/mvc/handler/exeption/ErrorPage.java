@@ -6,17 +6,17 @@ import java.io.StringWriter;
 public class ErrorPage {
 
     /* -------------------------- displaying the error -------------------------- */
-    public static void displayError(PrintWriter out, Exception e) {
+    public static void displayError(PrintWriter out, Exception e, int statusCode) {
         StringBuilder errorContent = new StringBuilder();
         
-        // Set content type and headers (if using HttpServletResponse)
-        // response.setContentType("text/html;charset=UTF-8");
+        // Get error title and message based on status code
+        String errorTitle = getErrorTitle(statusCode);
+        String errorDescription = getErrorDescription(statusCode);
         
-        // Add HTML header with enhanced styling
         errorContent.append("<!DOCTYPE html>\n")
             .append("<html>\n")
             .append("<head>\n")
-            .append("    <title>Error Page</title>\n")
+            .append("    <title>").append(errorTitle).append("</title>\n")
             .append("    <style>\n")
             .append("        body {\n")
             .append("            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n")
@@ -71,13 +71,18 @@ public class ErrorPage {
             .append("            font-size: 14px;\n")
             .append("            margin-bottom: 20px;\n")
             .append("        }\n")
+            .append("        .error-description {\n")
+            .append("            color: #666;\n")
+            .append("            margin: 10px 0;\n")
+            .append("        }\n")
             .append("    </style>\n")
             .append("</head>\n")
             .append("<body>\n");
     
         // Add error message content with timestamp
         errorContent.append("    <div class='error-container'>\n")
-            .append("        <h1 class='error-title'>⚠️ Application Error</h1>\n")
+            .append("        <h1 class='error-title'>").append(errorTitle).append("</h1>\n")
+            .append("        <p class='error-description'>").append(errorDescription).append("</p>\n")
             .append("        <div class='timestamp'>")
             .append("            Timestamp: ").append(new java.util.Date()).append("\n")
             .append("        </div>\n")
@@ -104,5 +109,41 @@ public class ErrorPage {
     
         // Write to PrintWriter
         out.println(errorContent.toString());
+    }
+    
+    // Helper method to get error title based on status code
+    private static String getErrorTitle(int statusCode) {
+        switch (statusCode) {
+            case 404:
+                return "404 - Page Not Found";
+            case 500:
+                return "500 - Internal Server Error";
+            case 400:
+                return "400 - Bad Request";
+            case 403:
+                return "403 - Forbidden";
+            case 401:
+                return "401 - Unauthorized";
+            default:
+                return "Error " + statusCode;
+        }
+    }
+    
+    // Helper method to get error description based on status code
+    private static String getErrorDescription(int statusCode) {
+        switch (statusCode) {
+            case 404:
+                return "The requested resource could not be found on this server.";
+            case 500:
+                return "The server encountered an internal error or misconfiguration and was unable to complete your request.";
+            case 400:
+                return "The server could not understand the request due to invalid syntax.";
+            case 403:
+                return "You don't have permission to access this resource.";
+            case 401:
+                return "Authentication is required and has failed or has not been provided.";
+            default:
+                return "An unexpected error has occurred.";
+        }
     }
 }

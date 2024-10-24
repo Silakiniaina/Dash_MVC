@@ -26,40 +26,64 @@ public class FrontController extends HttpServlet {
     private Exception error;
     private MySession mySession;
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb)throws ServletException, IOException {
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb) 
+            throws ServletException, IOException {
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
-        //out.println(new Gson().toJson(this.getURLMapping()));
         Mapping map = this.getURLMapping().get(requestURL);
         response.setContentType("text/json");
 
-        if(this.getMySession() == null) this.setMySession(new MySession(request.getSession()));
+        if(this.getMySession() == null) {
+            this.setMySession(new MySession(request.getSession()));
+        }
         
-        if(error != null){
+        if(error != null) {
             response.setContentType("text/html;charset=UTF-8");
-            ErrorPage.displayError(out, error);
-        }else{
-            try {
-                if(map != null){
-                    Object obj = ReflectUtils.executeRequestMethod(map,request,verb);
-                    if(obj instanceof String){
-                        out.println((String)obj);
-                    }else if(obj instanceof ModelView){
-                        ModelView mv = (ModelView)obj;
-                        HashMap<String, Object> data = mv.getData();
-                        if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)){
-                            out.println(new Gson().toJson(data));
-                        }else{
-                            for(String key : data.keySet()){
-                                request.setAttribute(key, data.get(key));
-                            }
-                            request.getRequestDispatcher(mv.getUrl()).forward(request, response);
-                        }
-                    }
-                }
-            }catch (Exception e) {
-                out.println(e.getMessage());
+            ErrorPage.displayError(out, error, 500);  
+            return;
+        }
+
+        try {
+            // Check for 404 error
+            if(map == null) {
+                response.setContentType("text/html;charset=UTF-8");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                Exception notFoundException = new Exception("Resource not found: " + requestURL);
+                ErrorPage.displayError(out, notFoundException, 404);
+                return;
             }
+
+            Object obj = ReflectUtils.executeRequestMethod(map, request, verb);
+            
+            // Check for 500 error
+            if(!(obj instanceof String) && !(obj instanceof ModelView)) {
+                response.setContentType("text/html;charset=UTF-8");
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                Exception invalidTypeException = new Exception("Response type must be either String or ModelView");
+                ErrorPage.displayError(out, invalidTypeException, 500);
+                return;
+            }
+
+            // Process valid responses...
+            if(obj instanceof String) {
+                out.println((String)obj);
+            } else if(obj instanceof ModelView) {
+                ModelView mv = (ModelView)obj;
+                HashMap<String, Object> data = mv.getData();
+                if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)) {
+                    response.setContentType("text/json");
+                    out.println(new Gson().toJson(data));
+                } else {
+                    for(String key : data.keySet()) {
+                        request.setAttribute(key, data.get(key));
+                    }
+                    request.getRequestDispatcher(mv.getUrl()).forward(request, response);
+                }
+            }
+        } catch (Exception e) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            ErrorPage.displayError(out, e, 500);
         }
     }
 
