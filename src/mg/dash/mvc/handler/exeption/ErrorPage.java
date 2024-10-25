@@ -9,7 +9,6 @@ public class ErrorPage {
     public static void displayError(PrintWriter out, Exception e, int statusCode) {
         StringBuilder errorContent = new StringBuilder();
         
-        // Get error title and message based on status code
         String errorTitle = getErrorTitle(statusCode);
         String errorDescription = getErrorDescription(statusCode);
         

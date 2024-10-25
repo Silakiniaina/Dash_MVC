@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import mg.dash.mvc.annotation.Controller;
 import mg.dash.mvc.annotation.RestApi;
 import mg.dash.mvc.handler.exeption.PackageScanNotFoundException;
+import mg.dash.mvc.handler.exeption.UnknownReturnTypeException;
 import mg.dash.mvc.handler.exeption.UrlNotFoundException;
 import mg.dash.mvc.handler.exeption.ErrorPage;
 import mg.dash.mvc.handler.url.Mapping;
@@ -45,27 +46,24 @@ public class FrontController extends HttpServlet {
         }
 
         try {
-            // Check for 404 error
             if(map == null) {
                 response.setContentType("text/html;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                UrlNotFoundException notFoundException = new UrlNotFoundException("Resource not found: " + requestURL);
+                UrlNotFoundException notFoundException = new UrlNotFoundException("Url : " + requestURL+" not found");
                 ErrorPage.displayError(out, notFoundException, 404);
                 return;
             }
 
             Object obj = ReflectUtils.executeRequestMethod(map, request, verb);
             
-            // Check for 500 error
             if(!(obj instanceof String) && !(obj instanceof ModelView)) {
                 response.setContentType("text/html;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                Exception invalidTypeException = new Exception("Response type must be either String or ModelView");
+                UnknownReturnTypeException invalidTypeException = new UnknownReturnTypeException("Response type must be String or ModelView");
                 ErrorPage.displayError(out, invalidTypeException, 500);
                 return;
             }
 
-            // Process valid responses...
             if(obj instanceof String) {
                 out.println((String)obj);
             } else if(obj instanceof ModelView) {
