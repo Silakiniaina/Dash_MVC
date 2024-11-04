@@ -1,4 +1,4 @@
-package mg.dashFramework.util;
+package mg.dash.mvc.util;
 
 public class FileUtils {
     public static String getSimpleFileName(String fileName, String extension) {

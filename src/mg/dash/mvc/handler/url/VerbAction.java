@@ -1,4 +1,4 @@
-package mg.dashFramework.handler.url;
+package mg.dash.mvc.handler.url;
 
 import java.lang.reflect.Method;
 

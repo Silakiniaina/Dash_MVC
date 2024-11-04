@@ -1,9 +1,7 @@
-package mg.dashFramework.annotation;
+package mg.dash.mvc.annotation;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Retention;
 
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Get {
-    
-}
+public @interface Controller {}

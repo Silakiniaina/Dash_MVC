@@ -1,4 +1,4 @@
-package mg.dashFramework.util;
+package mg.dash.mvc.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

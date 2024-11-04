@@ -1,4 +1,4 @@
-package mg.dashFramework.util;
+package mg.dash.mvc.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
-import mg.dashFramework.annotation.RequestParam;
-import mg.dashFramework.handler.url.Mapping;
+import mg.dash.mvc.annotation.RequestParam;
+import mg.dash.mvc.handler.url.Mapping;
 
 import java.lang.annotation.Annotation;
 
