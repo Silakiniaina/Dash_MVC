@@ -36,7 +36,7 @@ public class MethodUtils{
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
         for(Parameter parameter : method.getParameters()) {
-            Object object = "";
+            Object object = null;
             if (parameter.isAnnotationPresent(RequestParam.class)) {
                 object = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
                 countAnnotation++;

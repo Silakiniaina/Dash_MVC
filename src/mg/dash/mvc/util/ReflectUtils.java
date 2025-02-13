@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 import mg.dash.mvc.annotation.RequestParam;
 import mg.dash.mvc.handler.url.Mapping;
 
@@ -45,8 +46,15 @@ public class ReflectUtils {
                 }
             } else {
                 if (parameter.isAnnotationPresent(RequestParam.class)) {
-                    String annotationValue = parameter.getAnnotation(RequestParam.class).value();
-                    object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
+                    if (Part.class.isAssignableFrom(parameter.getType())) {
+                        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+                        if (requestParam != null) {
+                            object = request.getPart(requestParam.value());
+                        }
+                    }else{
+                        String annotationValue = parameter.getAnnotation(RequestParam.class).value();
+                        object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
+                    }
                     countAnnotation++;
                 }
             }
