@@ -7,7 +7,8 @@ import java.util.HashMap;
 
 import com.google.gson.Gson;
 
-import jakarta.servlet.ServletException;    
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ import mg.dash.mvc.util.ClassUtils;
 import mg.dash.mvc.util.PackageUtils;
 import mg.dash.mvc.util.ReflectUtils;
 
+@MultipartConfig
 public class FrontController extends HttpServlet {
     HashMap<String, Mapping> URLMapping;
     private Exception error;
