@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
 public class ObjectUtils {
     private static void setObjectAttributesValues(Object instance, String attributeName, String value)
@@ -79,6 +80,10 @@ public class ObjectUtils {
         keyValues.put(Double.TYPE, 0.0);
         keyValues.put(String.class, "");
         keyValues.put(Date.class, null);
+
+        if (Part.class.isAssignableFrom(object.getClass())) {
+            return null; 
+        }
 
         return keyValues.get(object.getClass());
     }

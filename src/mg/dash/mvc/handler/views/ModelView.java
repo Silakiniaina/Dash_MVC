@@ -17,6 +17,7 @@ public class ModelView {
 
     // Constructor
     public ModelView() {
+        setData(new HashMap<>());
     }
 
     public ModelView(String url, HashMap<String, Object> data) {
