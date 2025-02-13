@@ -1,5 +1,8 @@
 package mg.dash.mvc.util;
 
+import java.io.File;
+import java.io.IOException;
+
 import jakarta.servlet.http.Part;
 
 public class FileUtils {
@@ -17,5 +20,22 @@ public class FileUtils {
             }
         }
         return null;
+    }
+
+    public static String uploadFile(Part part, String directory) throws IOException {
+        if (part == null || directory == null || directory.isEmpty()) {
+            throw new IllegalArgumentException("Part or directory cannot be null or empty.");
+        }
+        String fileName = getFileName(part);
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IOException("Invalid file name.");
+        }
+        File uploadDir = new File(directory);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+        String filePath = directory + File.separator + fileName;
+        part.write(filePath);
+        return filePath;
     }
 }
