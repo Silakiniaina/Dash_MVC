@@ -84,24 +84,28 @@ public class ObjectUtils {
     }
 
     public static void validateField(Field f, String value)throws Exception{
+        HashMap<String, String> errors = new HashMap<>();
         if (StringUtils.isNull(value)) {
             if (f.isAnnotationPresent(Required.class)) {
-                throw new Exception("value required " + f.getName());
+                errors.put(f.getName(), "value is required for input : " + f.getName());
             }
         } else {
             if (f.isAnnotationPresent(mg.dash.mvc.annotation.Numeric.class)) {
                 if (!StringUtils.isNumeric(value)) {
-                    throw new Exception("value must be numeric " + f.getName());
+                    errors.put(f.getName(), "value must be numeric for input " + f.getName());
                 }
             } else if (f.isAnnotationPresent(mg.dash.mvc.annotation.Date.class)) {
                 if (!StringUtils.isDate(value)) {
-                    throw new Exception("value must be date " + f.getName());
+                    errors.put(f.getName(), "value must be date for input " + f.getName());
                 }
             } else if (f.isAnnotationPresent(Email.class)) {
                 if (!StringUtils.isEmail(value)) {
-                    throw new Exception("value must be email " + f.getName());
+                    errors.put(f.getName(), "value must be email for input " + f.getName());
                 }
             }
+        }
+        if (!errors.isEmpty()) {
+            throw new Exception(errors.toString());
         }
     }
 }
