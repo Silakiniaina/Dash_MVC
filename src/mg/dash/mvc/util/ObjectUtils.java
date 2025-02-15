@@ -11,6 +11,9 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
+import mg.dash.mvc.annotation.Email;
+import mg.dash.mvc.annotation.Required;
+import mg.dash.mvc.annotation.Numeric;
 
 public class ObjectUtils {
     private static void setObjectAttributesValues(Object instance, String attributeName, String value)
@@ -80,5 +83,27 @@ public class ObjectUtils {
             keyValues.put(Part.class, null); 
         }
         return keyValues.get(clazz);
+    }
+
+    public static void validateField(Field f, String value)throws Exception{
+        if (StringUtils.isNull(value)) {
+            if (f.isAnnotationPresent(Required.class)) {
+                throw new Exception("value required " + f.getName());
+            }
+        } else {
+            if (f.isAnnotationPresent(mg.dash.mvc.annotation.Numeric.class)) {
+                if (!StringUtils.isNumeric(value)) {
+                    throw new Exception("value must be numeric " + f.getName());
+                }
+            } else if (f.isAnnotationPresent(mg.dash.mvc.annotation.Date.class)) {
+                if (!StringUtils.isDate(value)) {
+                    throw new Exception("value must be date " + f.getName());
+                }
+            } else if (f.isAnnotationPresent(Email.class)) {
+                if (!StringUtils.isEmail(value)) {
+                    throw new Exception("value must be email " + f.getName());
+                }
+            }
+        }
     }
 }
