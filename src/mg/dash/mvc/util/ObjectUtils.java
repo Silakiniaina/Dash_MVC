@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
 public class ObjectUtils {
     private static void setObjectAttributesValues(Object instance, String attributeName, String value)
@@ -70,16 +71,14 @@ public class ObjectUtils {
 
     public static Object getDefaultValue(Class<?> clazz) throws InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        return getDefaultValue(clazz.getConstructor().newInstance());
-    }
-
-    public static Object getDefaultValue(Object object) {
         HashMap<Class<?>, Object> keyValues = new HashMap<>();
         keyValues.put(Integer.TYPE, 0);
         keyValues.put(Double.TYPE, 0.0);
         keyValues.put(String.class, "");
         keyValues.put(Date.class, null);
-
-        return keyValues.get(object.getClass());
+        if (Part.class.isAssignableFrom(clazz)) {
+            keyValues.put(Part.class, null); 
+        }
+        return keyValues.get(clazz);
     }
 }
