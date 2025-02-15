@@ -15,11 +15,11 @@ import mg.dash.mvc.annotation.Email;
 import mg.dash.mvc.annotation.Required;
 
 public class ObjectUtils {
-    private static void setObjectAttributesValues(Object instance, String attributeName, String value)
+    private static void setObjectAttributesValues(Object instance, String attributeName, String value, HttpServletRequest request)
             throws Exception  {
         Field field = instance.getClass().getDeclaredField(attributeName);
 
-        validateField(field, value);
+        validateField(field, value, request);
         Object fieldValue = castObject(value, field.getType());
         String setterMethodName = ReflectUtils.getSetterMethod(attributeName);
         Method method = instance.getClass().getMethod(setterMethodName, field.getType());
@@ -40,7 +40,7 @@ public class ObjectUtils {
             splitParamName = requestParamName.split("\\.");
             if (requestParamName.matches(regex) && splitParamName.length >= 2) {
                 attributeName = splitParamName[1];
-                setObjectAttributesValues(instance, attributeName, request.getParameter(requestParamName));
+                setObjectAttributesValues(instance, attributeName, request.getParameter(requestParamName), request);
             }
         }
 
@@ -83,7 +83,7 @@ public class ObjectUtils {
         return keyValues.get(clazz);
     }
 
-    public static void validateField(Field f, String value)throws Exception{
+    public static void validateField(Field f, String value, HttpServletRequest request)throws Exception{
         HashMap<String, String> errors = new HashMap<>();
         if (StringUtils.isNull(value) && f.isAnnotationPresent(Required.class)) {
             errors.put(f.getName(), "value is required for input : " + f.getName());
@@ -95,7 +95,7 @@ public class ObjectUtils {
             errors.put(f.getName(), "value must be email for input " + f.getName());
         }
         if (!errors.isEmpty()) {
-            throw new Exception(errors.toString());
+            request.setAttribute("error", errors);
         }
-    }
+    }   
 }
