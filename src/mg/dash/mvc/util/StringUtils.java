@@ -33,4 +33,8 @@ public class StringUtils {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
         return str.matches(emailRegex);
     }
+
+    public static boolean isNull(String str) {
+        return str == null || str.isEmpty();
+    }
 }
