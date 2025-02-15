@@ -28,4 +28,9 @@ public class StringUtils {
             return false;
         }
     }
+
+    public static boolean isEmail(String str) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        return str.matches(emailRegex);
+    }
 }
