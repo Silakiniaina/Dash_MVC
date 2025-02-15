@@ -32,6 +32,7 @@ public class FrontController extends HttpServlet {
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb) 
             throws ServletException, IOException {
+        HashMap<String, String> errors = new HashMap<>();
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
         Mapping map = this.getURLMapping().get(requestURL);
@@ -56,7 +57,12 @@ public class FrontController extends HttpServlet {
                 return;
             }
 
-            Object obj = ReflectUtils.executeRequestMethod(map, request, verb);
+            Object obj = ReflectUtils.executeRequestMethod(map, request, verb, errors);
+            if(errors.size() > 0) {
+                response.setContentType("text/json");
+                out.println(new Gson().toJson(errors));
+                return;
+            }
             
             if(!(obj instanceof String) && !(obj instanceof ModelView)) {
                 response.setContentType("text/html;charset=UTF-8");

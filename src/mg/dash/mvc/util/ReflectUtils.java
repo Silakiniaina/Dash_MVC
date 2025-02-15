@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +23,7 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb)
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb, HashMap<String, String> errors)
             throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException,Exception {
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
@@ -32,38 +33,18 @@ public class ReflectUtils {
         for (Parameter parameter : method.getParameters()) {
             Class<?> clazz = parameter.getType();
             Object object = ObjectUtils.getDefaultValue(clazz);
-            String strValue = null;
-            if (ObjectUtils.isPrimitive(clazz)) {
-                if (parameter.isAnnotationPresent(RequestParam.class)) {
-                    strValue = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
-                    object = strValue != null ? ObjectUtils.castObject(strValue, clazz) : object;
-                    countAnnotation++;
-                } 
-                // else {
-                //     String paramName = parameter.getName();
-                //     strValue = request.getParameter(paramName);
-                //     if (strValue != null) {
-                //         object = ObjectUtils.castObject(strValue, clazz);
-                //     }
-                // }
-            } else {
-                if (parameter.isAnnotationPresent(RequestParam.class)) {
-                    if (Part.class.isAssignableFrom(parameter.getType())) {
-                        object = request.getPart(parameter.getAnnotation(RequestParam.class).value());
-                    } else if(parameter.getType().equals(MySession.class)) {
-                        object = new MySession(request.getSession());
-                    } else {
-                        String annotationValue = parameter.getAnnotation(RequestParam.class).value();
-                        object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
-                    }
-                    countAnnotation++;
+            if (parameter.isAnnotationPresent(RequestParam.class)) {
+                if (Part.class.isAssignableFrom(parameter.getType())) {
+                    object = request.getPart(parameter.getAnnotation(RequestParam.class).value());
+                } else if(parameter.getType().equals(MySession.class)) {
+                    object = new MySession(request.getSession());
+                } else {
+                    String annotationValue = parameter.getAnnotation(RequestParam.class).value();
+                    object = ObjectUtils.getParameterInstance(clazz, annotationValue, request, errors);
                 }
+                countAnnotation++;
             }
             objects.add(object);
-        }
-        if(countAnnotation != paramNumber){
-            int n = paramNumber-countAnnotation;
-            throw new Exception("ETU002611 : Tous les parametres de la fonction "+method.getName()+" doivent etre anotter , il y a: "+n+" parametre sans annotation");
         }
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }
