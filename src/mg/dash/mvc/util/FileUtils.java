@@ -2,6 +2,10 @@ package mg.dash.mvc.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 import jakarta.servlet.http.Part;
 
@@ -22,20 +26,17 @@ public class FileUtils {
         return null;
     }
 
-    public static String uploadFile(Part part, String directory) throws IOException {
-        if (part == null || directory == null || directory.isEmpty()) {
-            throw new IllegalArgumentException("Part or directory cannot be null or empty.");
+    public static String uploadFile(Part file, String baseUploadDir) throws IOException {
+        Path uploadPath = Paths.get(System.getProperty("user.home"), "Dash upload", baseUploadDir).toAbsolutePath();
+        Files.createDirectories(uploadPath);
+        String originalFilename = getFileName(file);
+        String fileExtension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        String fileName = getFileName(part);
-        if (fileName == null || fileName.isEmpty()) {
-            throw new IOException("Invalid file name.");
-        }
-        File uploadDir = new File(directory);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
-        String filePath = directory + File.separator + fileName;
-        part.write(filePath);
-        return filePath;
+        String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+        Path filePath = uploadPath.resolve(uniqueFilename);
+        file.write(filePath.toString());
+        return filePath.toString();
     }
 }

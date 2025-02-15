@@ -71,20 +71,14 @@ public class ObjectUtils {
 
     public static Object getDefaultValue(Class<?> clazz) throws InstantiationException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        return getDefaultValue(clazz.getConstructor().newInstance());
-    }
-
-    public static Object getDefaultValue(Object object) {
         HashMap<Class<?>, Object> keyValues = new HashMap<>();
         keyValues.put(Integer.TYPE, 0);
         keyValues.put(Double.TYPE, 0.0);
         keyValues.put(String.class, "");
         keyValues.put(Date.class, null);
-
-        if (Part.class.isAssignableFrom(object.getClass())) {
-            return null; 
+        if (Part.class.isAssignableFrom(clazz)) {
+            keyValues.put(Part.class, null); 
         }
-
-        return keyValues.get(object.getClass());
+        return keyValues.get(clazz);
     }
 }
