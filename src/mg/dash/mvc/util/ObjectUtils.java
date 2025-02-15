@@ -85,24 +85,14 @@ public class ObjectUtils {
 
     public static void validateField(Field f, String value)throws Exception{
         HashMap<String, String> errors = new HashMap<>();
-        if (StringUtils.isNull(value)) {
-            if (f.isAnnotationPresent(Required.class)) {
-                errors.put(f.getName(), "value is required for input : " + f.getName());
-            }
-        } else {
-            if (f.isAnnotationPresent(mg.dash.mvc.annotation.Numeric.class)) {
-                if (!StringUtils.isNumeric(value)) {
-                    errors.put(f.getName(), "value must be numeric for input " + f.getName());
-                }
-            } else if (f.isAnnotationPresent(mg.dash.mvc.annotation.Date.class)) {
-                if (!StringUtils.isDate(value)) {
-                    errors.put(f.getName(), "value must be date for input " + f.getName());
-                }
-            } else if (f.isAnnotationPresent(Email.class)) {
-                if (!StringUtils.isEmail(value)) {
-                    errors.put(f.getName(), "value must be email for input " + f.getName());
-                }
-            }
+        if (StringUtils.isNull(value) && f.isAnnotationPresent(Required.class)) {
+            errors.put(f.getName(), "value is required for input : " + f.getName());
+        }else if (f.isAnnotationPresent(mg.dash.mvc.annotation.Numeric.class) && !StringUtils.isNumeric(value)) {
+            errors.put(f.getName(), "value must be numeric for input " + f.getName());
+        } else if (!StringUtils.isDate(value) && f.isAnnotationPresent(mg.dash.mvc.annotation.Date.class)) {
+            errors.put(f.getName(), "value must be date for input " + f.getName());
+        } else if (!StringUtils.isEmail(value) && f.isAnnotationPresent(Email.class)) {
+            errors.put(f.getName(), "value must be email for input " + f.getName());
         }
         if (!errors.isEmpty()) {
             throw new Exception(errors.toString());
