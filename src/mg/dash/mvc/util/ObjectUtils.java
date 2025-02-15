@@ -11,13 +11,15 @@ import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
+import mg.dash.mvc.annotation.Email;
+import mg.dash.mvc.annotation.Required;
 
 public class ObjectUtils {
     private static void setObjectAttributesValues(Object instance, String attributeName, String value)
-            throws NoSuchFieldException, SecurityException, NoSuchMethodException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException {
+            throws Exception  {
         Field field = instance.getClass().getDeclaredField(attributeName);
 
+        validateField(field, value);
         Object fieldValue = castObject(value, field.getType());
         String setterMethodName = ReflectUtils.getSetterMethod(attributeName);
         Method method = instance.getClass().getMethod(setterMethodName, field.getType());
@@ -25,8 +27,7 @@ public class ObjectUtils {
     }
 
     public static Object getParameterInstance(Class<?> classType, String annotationValue, HttpServletRequest request)
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-            NoSuchMethodException, SecurityException, NoSuchFieldException {
+            throws Exception {
         Object instance = classType.getConstructor().newInstance();
         Enumeration<String> requestParams = request.getParameterNames();
         String attributeName = null, className = null, requestParamName = null, regex = null;
@@ -80,5 +81,27 @@ public class ObjectUtils {
             keyValues.put(Part.class, null); 
         }
         return keyValues.get(clazz);
+    }
+
+    public static void validateField(Field f, String value)throws Exception{
+        if (StringUtils.isNull(value)) {
+            if (f.isAnnotationPresent(Required.class)) {
+                throw new Exception("value required " + f.getName());
+            }
+        } else {
+            if (f.isAnnotationPresent(mg.dash.mvc.annotation.Numeric.class)) {
+                if (!StringUtils.isNumeric(value)) {
+                    throw new Exception("value must be numeric " + f.getName());
+                }
+            } else if (f.isAnnotationPresent(mg.dash.mvc.annotation.Date.class)) {
+                if (!StringUtils.isDate(value)) {
+                    throw new Exception("value must be date " + f.getName());
+                }
+            } else if (f.isAnnotationPresent(Email.class)) {
+                if (!StringUtils.isEmail(value)) {
+                    throw new Exception("value must be email " + f.getName());
+                }
+            }
+        }
     }
 }
