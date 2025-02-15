@@ -26,16 +26,19 @@ public class FileUtils {
         return null;
     }
 
-    public static String uploadFile(Part file, String baseUploadDir) throws IOException {
-        Path uploadPath = Paths.get(System.getProperty("user.home"), "Dash upload", baseUploadDir).toAbsolutePath();
+    public static String uploadFile(Part file, String baseUploadDir, boolean useOriginalFileName) throws IOException {
+        Path uploadPath = Paths.get(System.getProperty("user.home"), "Dash Upload", baseUploadDir).toAbsolutePath();
         Files.createDirectories(uploadPath);
         String originalFilename = getFileName(file);
+        String uploadFileName = originalFilename;
         String fileExtension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
-        String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
-        Path filePath = uploadPath.resolve(uniqueFilename);
+        if(!useOriginalFileName){
+            uploadFileName = UUID.randomUUID().toString() + fileExtension;
+        }
+        Path filePath = uploadPath.resolve(uploadFileName);
         file.write(filePath.toString());
         return filePath.toString();
     }
