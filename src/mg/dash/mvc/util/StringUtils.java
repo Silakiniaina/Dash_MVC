@@ -35,6 +35,6 @@ public class StringUtils {
     }
 
     public static boolean isNull(String str) {
-        return str == null || str.isEmpty();
+        return str == null || str.isEmpty() || str.trim().equals("");
     }
 }

@@ -13,14 +13,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 import mg.dash.mvc.annotation.Email;
 import mg.dash.mvc.annotation.Required;
-import mg.dash.mvc.annotation.Numeric;
 
 public class ObjectUtils {
     private static void setObjectAttributesValues(Object instance, String attributeName, String value)
-            throws NoSuchFieldException, SecurityException, NoSuchMethodException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException {
+            throws Exception  {
         Field field = instance.getClass().getDeclaredField(attributeName);
 
+        validateField(field, value);
         Object fieldValue = castObject(value, field.getType());
         String setterMethodName = ReflectUtils.getSetterMethod(attributeName);
         Method method = instance.getClass().getMethod(setterMethodName, field.getType());
@@ -28,8 +27,7 @@ public class ObjectUtils {
     }
 
     public static Object getParameterInstance(Class<?> classType, String annotationValue, HttpServletRequest request)
-            throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-            NoSuchMethodException, SecurityException, NoSuchFieldException {
+            throws Exception {
         Object instance = classType.getConstructor().newInstance();
         Enumeration<String> requestParams = request.getParameterNames();
         String attributeName = null, className = null, requestParamName = null, regex = null;

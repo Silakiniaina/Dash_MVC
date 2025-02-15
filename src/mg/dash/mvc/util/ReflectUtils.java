@@ -38,13 +38,14 @@ public class ReflectUtils {
                     strValue = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
                     object = strValue != null ? ObjectUtils.castObject(strValue, clazz) : object;
                     countAnnotation++;
-                } else {
-                    String paramName = parameter.getName();
-                    strValue = request.getParameter(paramName);
-                    if (strValue != null) {
-                        object = ObjectUtils.castObject(strValue, clazz);
-                    }
-                }
+                } 
+                // else {
+                //     String paramName = parameter.getName();
+                //     strValue = request.getParameter(paramName);
+                //     if (strValue != null) {
+                //         object = ObjectUtils.castObject(strValue, clazz);
+                //     }
+                // }
             } else {
                 if (parameter.isAnnotationPresent(RequestParam.class)) {
                     if (Part.class.isAssignableFrom(parameter.getType())) {
