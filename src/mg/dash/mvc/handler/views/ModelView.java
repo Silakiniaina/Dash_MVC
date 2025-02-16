@@ -25,6 +25,11 @@ public class ModelView {
         setData(data);
     }
 
+    public ModelView(String url) {
+        setUrl(url);
+        setData(new HashMap<>());
+    }
+    
     // Getters and setters
     public String getUrl() {
         return url;
