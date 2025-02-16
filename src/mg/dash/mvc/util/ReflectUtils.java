@@ -117,12 +117,6 @@ public class ReflectUtils {
         return classes;
     }
 
-    // public static Object executeMethod(Object object, String methodName, Object... args) throws NoSuchMethodException,
-    //         SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-    //     Method method = object.getClass().getMethod(methodName, getArgsClasses(args));
-    //     return method.invoke(object, args);
-    // }
-
     public static Object executeMethod(Object object, String methodName, Object... args) throws NoSuchMethodException,
     SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Class<?>[] argClasses = getArgsClasses(args);
@@ -166,25 +160,4 @@ public class ReflectUtils {
         }
     }
     
-    
-
-//  // Existing method renamed to indicate it creates a new instance
-//     public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, 
-//             String verb, Map<String, String> errors) throws Exception {
-//         Class<?> clazz = Class.forName(mapping.getClassName());
-//         Object instance = clazz.getDeclaredConstructor().newInstance();
-//         return executeRequestMethodWithInstance(mapping, instance, request, verb, errors);
-//     }
-    
-//     // New method that uses an existing instance
-//     public static Object executeRequestMethodWithInstance(Mapping mapping, Object instance,
-//             HttpServletRequest request, String verb, Map<String, String> errors) throws Exception {
-//         Method method = mapping.getMethodByVerb(verb);
-//         if (method == null) {
-//             throw new NoSuchMethodException("No method found for HTTP verb: " + verb);
-//         }
-        
-//         // Execute method with the provided instance
-//         return method.invoke(instance, request);
-//     }
 }
