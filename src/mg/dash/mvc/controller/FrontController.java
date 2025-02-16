@@ -21,7 +21,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,13 +35,14 @@ public class FrontController extends HttpServlet {
     @Override
     public void init() throws ServletException {
         try {
+            this.controllerInstances = new HashMap<>();
             initializeUrlMapping();
         } catch (Exception e) {
             initializationError = e;
         }
     }
 
-    private void initializeUrlMapping() throws PackageScanNotFoundException, Exception {
+    private void initializeUrlMapping() throws PackageScanNotFoundException ,Exception{
         this.urlMapping = new HashMap<>();
         String packageName = getInitParameter("controller_dir");
         
@@ -50,8 +50,17 @@ public class FrontController extends HttpServlet {
             throw new PackageScanNotFoundException("Controller directory not specified in initialization parameters");
         }
         
-        List<Class<?>> controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+        var controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
         this.urlMapping = ClassUtils.includeMethodHavingUrlAnnotation(controllerClasses);
+        
+        for (Class<?> controllerClass : controllerClasses) {
+            try {
+                Object controllerInstance = controllerClass.getDeclaredConstructor().newInstance();
+                controllerInstances.put(controllerClass.getName(), controllerInstance);
+            } catch (Exception e) {
+                throw new ServletException("Failed to initialize controller: " + controllerClass.getName(), e);
+            }
+        }
     }
 
     @Override
