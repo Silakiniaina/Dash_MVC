@@ -71,6 +71,10 @@ public class MySession {
         }
     }
 
+    public void invalidate() {
+        session.invalidate();
+    }
+
     /* Setters */
     public void setSession(HttpSession s){
         this.session = s;
