@@ -200,6 +200,12 @@ public class FrontController extends HttpServlet {
         out.println(gson.toJson(data));
     }
 
+    private void handleAuthorizationError(HttpServletResponse response, PrintWriter out, AuthorizationException e) {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        ErrorPage.displayError(out, e, 403);
+    }
+    
     // Getters and setters
     public Map<String, Mapping> getURLMapping() {
         return this.urlMapping;
