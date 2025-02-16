@@ -12,6 +12,7 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 import mg.dash.mvc.annotation.RequestParam;
+import mg.dash.mvc.controller.FrontController;
 import mg.dash.mvc.controller.MySession;
 import mg.dash.mvc.handler.url.Mapping;
 
@@ -148,14 +149,15 @@ public class ReflectUtils {
         return executeMethod(object, methodName, args);
     }
 
-    public static void injectMySession(Object controller, HttpServletRequest request) throws Exception{
+    public static void injectMySession(Object controller, HttpServletRequest request, FrontController front) throws Exception{
         try {
             Field[] fields = controller.getClass().getDeclaredFields();
             for (Field field : fields) {
                 if (field.getType().equals(MySession.class)) {
-                    field.setAccessible(true);
                     MySession sessionInstance = new MySession(request.getSession());
+                    front.setMySession(sessionInstance);
                     field.set(controller, sessionInstance);
+                    break;
                 }
             }
         } catch (Exception e) {

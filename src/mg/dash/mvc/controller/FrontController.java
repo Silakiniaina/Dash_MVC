@@ -110,7 +110,7 @@ public class FrontController extends HttpServlet {
 
         try {
             // Get controller instance with injected session
-            Object controller = getControllerInstance(mapping, request);
+            Object controller = getControllerInstance(mapping, request, this);
 
             // Check authorization before executing the method
             Method method = mapping.getMethodByVerb(httpMethod);
@@ -195,7 +195,7 @@ public class FrontController extends HttpServlet {
             Method getMethod = Optional.ofNullable(mapping.getMethodByVerb("GET"))
                     .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
 
-            Object instance = getControllerInstance(mapping, request);
+            Object instance = getControllerInstance(mapping, request, this);
             Object viewObj = ReflectUtils.executeRequestMethod(mapping, instance,request, "GET", new HashMap<>());
 
             if (viewObj instanceof ModelView) {
@@ -229,14 +229,14 @@ public class FrontController extends HttpServlet {
         ErrorPage.displayError(out, e, 403);
     }
 
-    private Object getControllerInstance(Mapping mapping, HttpServletRequest request) throws Exception {
+    private Object getControllerInstance(Mapping mapping, HttpServletRequest request, FrontController front) throws Exception {
         String className = mapping.getClassName();
         Object controller = controllerInstances.get(className);
 
         if (controller == null) {
             throw new ServletException("Controller not initialized: " + className);
         }
-        ReflectUtils.injectMySession(controller, request);
+        ReflectUtils.injectMySession(controller, request, front);
         return controller;
     }
 
