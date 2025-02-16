@@ -101,7 +101,7 @@ public class FrontController extends HttpServlet {
         try {
             // Check authorization before executing the method
             Method method = mapping.getMethodByVerb(httpMethod);
-            AuthorizationInterceptor.checkAuthorization(method, request);
+            AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
             
             Object result = ReflectUtils.executeRequestMethod(mapping, request, httpMethod, validationErrors);
             
