@@ -12,6 +12,15 @@ public class MySession {
         this.setSession(s);
     }
 
+    /* Authorization management */
+    public void setUser(Object user) {
+        session.setAttribute("user", user);
+    }
+
+    public Object getUser() {
+        return session.getAttribute("user");
+    }
+
     /* Basical methods  */
     public Object get(String key){
         return this.getSession().getAttribute(key);
