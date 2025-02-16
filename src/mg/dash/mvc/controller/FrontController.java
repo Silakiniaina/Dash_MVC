@@ -1,12 +1,6 @@
 package mg.dash.mvc.controller;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import com.google.gson.Gson;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
@@ -14,122 +8,212 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import mg.dash.mvc.annotation.Controller;
 import mg.dash.mvc.annotation.RestApi;
-import mg.dash.mvc.handler.exeption.PackageScanNotFoundException;
-import mg.dash.mvc.handler.exeption.UnknownReturnTypeException;
-import mg.dash.mvc.handler.exeption.UrlNotFoundException;
-import mg.dash.mvc.handler.exeption.ErrorPage;
+import mg.dash.mvc.handler.exeption.*;
 import mg.dash.mvc.handler.url.Mapping;
 import mg.dash.mvc.handler.views.ModelView;
 import mg.dash.mvc.util.ClassUtils;
 import mg.dash.mvc.util.PackageUtils;
 import mg.dash.mvc.util.ReflectUtils;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @MultipartConfig
 public class FrontController extends HttpServlet {
-    HashMap<String, Mapping> URLMapping;
-    private Exception error;
+    private static final Gson gson = new Gson();
+    private Map<String, Mapping> urlMapping;
+    private Exception initializationError;
     private MySession mySession;
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb) 
-            throws ServletException, IOException {
-        PrintWriter out = response.getWriter();
-        String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
-        Mapping map = this.getURLMapping().get(requestURL);
-        response.setContentType("text/json");
-
-        if(this.getMySession() == null) {
-            this.setMySession(new MySession(request.getSession()));
-        }
-        
-        if(error != null) {
-            response.setContentType("text/html;charset=UTF-8");
-            ErrorPage.displayError(out, error, 500);  
-            return;
-        }
-
+    @Override
+    public void init() throws ServletException {
         try {
-            if(map == null) {
-                response.setContentType("text/html;charset=UTF-8");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                UrlNotFoundException notFoundException = new UrlNotFoundException("Url : " + requestURL+" not found");
-                ErrorPage.displayError(out, notFoundException, 404);
-                return;
-            }
-
-            Object obj = ReflectUtils.executeRequestMethod(map, request, verb);
-            
-            if(!(obj instanceof String) && !(obj instanceof ModelView)) {
-                response.setContentType("text/html;charset=UTF-8");
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                UnknownReturnTypeException invalidTypeException = new UnknownReturnTypeException("Response type must be String or ModelView");
-                ErrorPage.displayError(out, invalidTypeException, 500);
-                return;
-            }
-
-            if(obj instanceof String) {
-                out.println((String)obj);
-            } else if(obj instanceof ModelView) {
-                ModelView mv = (ModelView)obj;
-                HashMap<String, Object> data = mv.getData();
-                if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)) {
-                    response.setContentType("text/json");
-                    out.println(new Gson().toJson(data));
-                } else {
-                    for(String key : data.keySet()) {
-                        request.setAttribute(key, data.get(key));
-                    }
-                    request.getRequestDispatcher(mv.getUrl()).forward(request, response);
-                }
-            }
+            initializeUrlMapping();
         } catch (Exception e) {
-            response.setContentType("text/html;charset=UTF-8");
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            ErrorPage.displayError(out, e, 500);
+            initializationError = e;
         }
     }
 
-    // Override methods
+    private void initializeUrlMapping() throws PackageScanNotFoundException, Exception {
+        this.urlMapping = new HashMap<>();
+        String packageName = getInitParameter("controller_dir");
+        
+        if (packageName == null) {
+            throw new PackageScanNotFoundException("Controller directory not specified in initialization parameters");
+        }
+        
+        List<Class<?>> controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+        this.urlMapping = ClassUtils.includeMethodHavingUrlAnnotation(controllerClasses);
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String verb = "GET";
-        processRequest(req, resp, verb);
+        processRequest(req, resp, "GET");
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String verb = "POST";
-        processRequest(req, resp, verb);
+        processRequest(req, resp, "POST");
     }
 
-    @Override
-    public void init() throws ServletException {
-        this.setURLMapping(new HashMap<String, Mapping>());
-        String packageName = this.getInitParameter("controller_dir");
-        try{
-            if(packageName == null ){
-                throw new PackageScanNotFoundException();
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod) 
+            throws ServletException, IOException {
+        PrintWriter out = response.getWriter();
+        
+        // Check for initialization errors
+        if (initializationError != null) {
+            handleError(response, out, initializationError, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            return;
+        }
+
+        // Initialize or get session
+        if (mySession == null) {
+            mySession = new MySession(request.getSession());
+        }
+
+        // Get mapping for requested URL
+        String requestURL = extractRequestUrl(request);
+        Mapping mapping = urlMapping.get(requestURL);
+        
+        if (mapping == null) {
+            handleUrlNotFound(response, out, requestURL);
+            return;
+        }
+
+        processMapping(request, response, out, mapping, httpMethod);
+    }
+
+    private String extractRequestUrl(HttpServletRequest request) {
+        return request.getRequestURI().substring(request.getContextPath().length());
+    }
+
+    private void processMapping(HttpServletRequest request, HttpServletResponse response, 
+            PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
+        HashMap<String, String> validationErrors = new HashMap<>();
+        
+        try {
+            Object result = ReflectUtils.executeRequestMethod(mapping, request, httpMethod, validationErrors);
+            
+            if (!validationErrors.isEmpty()) {
+                handleValidationErrors(request, response, out, mapping, httpMethod, validationErrors);
+                return;
             }
-            ArrayList<Class<?>> classes = (ArrayList<Class<?>>)PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
-            HashMap<String, Mapping> mapping = ClassUtils.includeMethodHavingUrlAnnotation(classes);
-            this.setURLMapping(mapping);
-        }catch(Exception e){
-            error = e;
+            
+            handleSuccessResponse(request, response, out, mapping, httpMethod, result);
+            
+        } catch (Exception e) {
+            handleError(response, out, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    /* Getters */
-    public HashMap<String, Mapping> getURLMapping(){
-        return this.URLMapping;
+    private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response, 
+            PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors) 
+            throws ServletException, IOException {
+        Method method = mapping.getMethodByVerb(httpMethod);
+        
+        if (method.isAnnotationPresent(RestApi.class)) {
+            sendJsonResponse(response, out, errors);
+            return;
+        }
+        
+        preserveFormDataAndErrors(request, errors);
+        redirectToGetView(request, response, mapping);
     }
-    public MySession getMySession(){
+
+    private void handleSuccessResponse(HttpServletRequest request, HttpServletResponse response, 
+            PrintWriter out, Mapping mapping, String httpMethod, Object result) 
+            throws ServletException, IOException, UnknownReturnTypeException {
+        if (result == null) {
+            throw new UnknownReturnTypeException("Response cannot be null");
+        }
+
+        if (result instanceof String) {
+            out.println(result);
+        } else if (result instanceof ModelView) {
+            handleModelViewResponse(request, response, out, mapping, httpMethod, (ModelView) result);
+        } else {
+            throw new UnknownReturnTypeException("Response type must be String or ModelView");
+        }
+    }
+
+    private void handleModelViewResponse(HttpServletRequest request, HttpServletResponse response, 
+            PrintWriter out, Mapping mapping, String httpMethod, ModelView modelView) 
+            throws ServletException, IOException {
+        if (mapping.getMethodByVerb(httpMethod).isAnnotationPresent(RestApi.class)) {
+            sendJsonResponse(response, out, modelView.getData());
+            return;
+        }
+
+        for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
+            request.setAttribute(entry.getKey(), entry.getValue());
+        }
+        
+        request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
+    }
+
+    private void preserveFormDataAndErrors(HttpServletRequest request, Map<String, String> errors) {
+        request.setAttribute("validationErrors", errors);
+        
+        Enumeration<String> paramNames = request.getParameterNames();
+        while (paramNames.hasMoreElements()) {
+            String paramName = paramNames.nextElement();
+            request.setAttribute(paramName, request.getParameter(paramName));
+        }
+    }
+
+    private void redirectToGetView(HttpServletRequest request, HttpServletResponse response, 
+            Mapping mapping) throws ServletException, IOException {
+        try {
+            Method getMethod = Optional.ofNullable(mapping.getMethodByVerb("GET"))
+                .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
+
+            Object viewObj = ReflectUtils.executeRequestMethod(mapping, request, "GET", new HashMap<>());
+            
+            if (viewObj instanceof ModelView) {
+                request.getRequestDispatcher(((ModelView) viewObj).getUrl()).forward(request, response);
+            }
+        } catch (Exception e) {
+            handleError(response, response.getWriter(), e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void handleUrlNotFound(HttpServletResponse response, PrintWriter out, String requestURL) {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        ErrorPage.displayError(out, new UrlNotFoundException("URL: " + requestURL + " not found"), 404);
+    }
+
+    private void handleError(HttpServletResponse response, PrintWriter out, Exception error, int statusCode) {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(statusCode);
+        ErrorPage.displayError(out, error, statusCode);
+    }
+
+    private void sendJsonResponse(HttpServletResponse response, PrintWriter out, Object data) {
+        response.setContentType("application/json");
+        out.println(gson.toJson(data));
+    }
+
+    // Getters and setters
+    public Map<String, Mapping> getURLMapping() {
+        return this.urlMapping;
+    }
+
+    public MySession getMySession() {
         return this.mySession;
     }
 
-    /* Setters */
-    public void setURLMapping(HashMap<String, Mapping> u){
-        this.URLMapping = u;
+    public void setURLMapping(Map<String, Mapping> urlMapping) {
+        this.urlMapping = urlMapping;
     }
-    public void setMySession(MySession s){
-        this.mySession = s;
+
+    public void setMySession(MySession session) {
+        this.mySession = session;
     }
 }

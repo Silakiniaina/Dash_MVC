@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,49 +23,71 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb)
-            throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException,Exception {
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb, HashMap<String, String> errors)
+    throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
+    InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException, Exception {
+
         List<Object> objects = new ArrayList<>();
         Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethodByVerb(verb);
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
+
+        // First pass: validate all @RequestParam parameters
+        for (Parameter parameter : method.getParameters()) {
+            if (parameter.isAnnotationPresent(RequestParam.class)) {
+                Class<?> clazz = parameter.getType();
+                
+                // Skip validation for special types (Part and MySession)
+                if (!Part.class.isAssignableFrom(clazz) && !clazz.equals(MySession.class)) {
+                    String annotationValue = parameter.getAnnotation(RequestParam.class).value();
+                    // This will only validate and collect errors
+                    Object validationCheck = ObjectUtils.getParameterInstance(clazz, annotationValue, request, errors);
+                    
+                    // If validation failed and it's a required parameter, we should stop
+                    if (validationCheck == null) {
+                        return null; // Or throw an exception, depending on your needs
+                    }
+                }
+            }
+        }
+
+        // If there are validation errors, return null or throw an exception
+        if (!errors.isEmpty()) {
+            return null; // Or throw new ValidationException(errors)
+        }
+
+        // Second pass: actually create and populate the objects
         for (Parameter parameter : method.getParameters()) {
             Class<?> clazz = parameter.getType();
             Object object = ObjectUtils.getDefaultValue(clazz);
-            String strValue = null;
-            if (ObjectUtils.isPrimitive(clazz)) {
-                if (parameter.isAnnotationPresent(RequestParam.class)) {
-                    strValue = request.getParameter(parameter.getAnnotation(RequestParam.class).value());
-                    object = strValue != null ? ObjectUtils.castObject(strValue, clazz) : object;
-                    countAnnotation++;
-                } 
-                // else {
-                //     String paramName = parameter.getName();
-                //     strValue = request.getParameter(paramName);
-                //     if (strValue != null) {
-                //         object = ObjectUtils.castObject(strValue, clazz);
-                //     }
-                // }
-            } else {
-                if (parameter.isAnnotationPresent(RequestParam.class)) {
-                    if (Part.class.isAssignableFrom(parameter.getType())) {
-                        object = request.getPart(parameter.getAnnotation(RequestParam.class).value());
-                    } else if(parameter.getType().equals(MySession.class)) {
-                        object = new MySession(request.getSession());
-                    } else {
-                        String annotationValue = parameter.getAnnotation(RequestParam.class).value();
-                        object = ObjectUtils.getParameterInstance(clazz, annotationValue, request);
+            
+            if (parameter.isAnnotationPresent(RequestParam.class)) {
+                RequestParam annotation = parameter.getAnnotation(RequestParam.class);
+                
+                if (Part.class.isAssignableFrom(parameter.getType())) {
+                    object = request.getPart(annotation.value());
+                } else if (parameter.getType().equals(MySession.class)) {
+                    object = new MySession(request.getSession());
+                } else {
+                    String annotationValue = annotation.value();
+                    object = ObjectUtils.getParameterInstance(clazz, annotationValue, request, errors);
+                    
+                    // This should not happen as we've already validated, but just in case
+                    if (object == null) {
+                        throw new IllegalStateException("Required parameter failed validation: " + parameter.getName());
                     }
-                    countAnnotation++;
                 }
+                countAnnotation++;
             }
             objects.add(object);
         }
-        if(countAnnotation != paramNumber){
-            int n = paramNumber-countAnnotation;
-            throw new Exception("ETU002611 : Tous les parametres de la fonction "+method.getName()+" doivent etre anotter , il y a: "+n+" parametre sans annotation");
+
+        // Verify that we processed the expected number of parameters
+        if (countAnnotation != paramNumber) {
+            throw new IllegalArgumentException("Method parameters and annotations count mismatch");
         }
+
         return executeClassMethod(objClass, method.getName(), objects.toArray());
     }
 
