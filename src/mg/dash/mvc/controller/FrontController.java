@@ -11,6 +11,7 @@ import mg.dash.mvc.annotation.RestApi;
 import mg.dash.mvc.handler.exeption.*;
 import mg.dash.mvc.handler.url.Mapping;
 import mg.dash.mvc.handler.views.ModelView;
+import mg.dash.mvc.security.AuthorizationInterceptor;
 import mg.dash.mvc.util.ClassUtils;
 import mg.dash.mvc.util.PackageUtils;
 import mg.dash.mvc.util.ReflectUtils;
@@ -20,7 +21,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,10 +30,12 @@ public class FrontController extends HttpServlet {
     private Map<String, Mapping> urlMapping;
     private Exception initializationError;
     private MySession mySession;
+    private Map<String, Object> controllerInstances;
 
     @Override
     public void init() throws ServletException {
         try {
+            this.controllerInstances = new HashMap<>();
             initializeUrlMapping();
         } catch (Exception e) {
             initializationError = e;
@@ -43,13 +45,22 @@ public class FrontController extends HttpServlet {
     private void initializeUrlMapping() throws PackageScanNotFoundException, Exception {
         this.urlMapping = new HashMap<>();
         String packageName = getInitParameter("controller_dir");
-        
+
         if (packageName == null) {
             throw new PackageScanNotFoundException("Controller directory not specified in initialization parameters");
         }
-        
-        List<Class<?>> controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
+
+        var controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
         this.urlMapping = ClassUtils.includeMethodHavingUrlAnnotation(controllerClasses);
+
+        for (Class<?> controllerClass : controllerClasses) {
+            try {
+                Object controllerInstance = controllerClass.getDeclaredConstructor().newInstance();
+                controllerInstances.put(controllerClass.getName(), controllerInstance);
+            } catch (Exception e) {
+                throw new ServletException("Failed to initialize controller: " + controllerClass.getName(), e);
+            }
+        }
     }
 
     @Override
@@ -62,10 +73,10 @@ public class FrontController extends HttpServlet {
         processRequest(req, resp, "POST");
     }
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod) 
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod)
             throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-        
+
         // Check for initialization errors
         if (initializationError != null) {
             handleError(response, out, initializationError, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -80,7 +91,7 @@ public class FrontController extends HttpServlet {
         // Get mapping for requested URL
         String requestURL = extractRequestUrl(request);
         Mapping mapping = urlMapping.get(requestURL);
-        
+
         if (mapping == null) {
             handleUrlNotFound(response, out, requestURL);
             return;
@@ -93,41 +104,52 @@ public class FrontController extends HttpServlet {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
-    private void processMapping(HttpServletRequest request, HttpServletResponse response, 
+    private void processMapping(HttpServletRequest request, HttpServletResponse response,
             PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
         HashMap<String, String> validationErrors = new HashMap<>();
-        
+
         try {
-            Object result = ReflectUtils.executeRequestMethod(mapping, request, httpMethod, validationErrors);
-            
+            // Get controller instance with injected session
+            Object controller = getControllerInstance(mapping, request, this);
+
+            // Check authorization before executing the method
+            Method method = mapping.getMethodByVerb(httpMethod);
+            AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
+
+            // Execute the method with the controller instance that has MySession injected
+            Object result = ReflectUtils.executeRequestMethod(
+                    mapping, controller, request, httpMethod, validationErrors);
+
             if (!validationErrors.isEmpty()) {
                 handleValidationErrors(request, response, out, mapping, httpMethod, validationErrors);
                 return;
             }
-            
+
             handleSuccessResponse(request, response, out, mapping, httpMethod, result);
-            
+
+        } catch (AuthorizationException e) {
+            handleAuthorizationError(response, out, e);
         } catch (Exception e) {
             handleError(response, out, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors) 
+    private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors)
             throws ServletException, IOException {
         Method method = mapping.getMethodByVerb(httpMethod);
-        
+
         if (method.isAnnotationPresent(RestApi.class)) {
             sendJsonResponse(response, out, errors);
             return;
         }
-        
+
         preserveFormDataAndErrors(request, errors);
         redirectToGetView(request, response, mapping);
     }
 
-    private void handleSuccessResponse(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, Object result) 
+    private void handleSuccessResponse(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, Object result)
             throws ServletException, IOException, UnknownReturnTypeException {
         if (result == null) {
             throw new UnknownReturnTypeException("Response cannot be null");
@@ -142,8 +164,8 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void handleModelViewResponse(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, ModelView modelView) 
+    private void handleModelViewResponse(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, ModelView modelView)
             throws ServletException, IOException {
         if (mapping.getMethodByVerb(httpMethod).isAnnotationPresent(RestApi.class)) {
             sendJsonResponse(response, out, modelView.getData());
@@ -153,13 +175,13 @@ public class FrontController extends HttpServlet {
         for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
             request.setAttribute(entry.getKey(), entry.getValue());
         }
-        
+
         request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
     }
 
     private void preserveFormDataAndErrors(HttpServletRequest request, Map<String, String> errors) {
         request.setAttribute("validationErrors", errors);
-        
+
         Enumeration<String> paramNames = request.getParameterNames();
         while (paramNames.hasMoreElements()) {
             String paramName = paramNames.nextElement();
@@ -167,14 +189,15 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void redirectToGetView(HttpServletRequest request, HttpServletResponse response, 
+    private void redirectToGetView(HttpServletRequest request, HttpServletResponse response,
             Mapping mapping) throws ServletException, IOException {
         try {
             Method getMethod = Optional.ofNullable(mapping.getMethodByVerb("GET"))
-                .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
+                    .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
 
-            Object viewObj = ReflectUtils.executeRequestMethod(mapping, request, "GET", new HashMap<>());
-            
+            Object instance = getControllerInstance(mapping, request, this);
+            Object viewObj = ReflectUtils.executeRequestMethod(mapping, instance,request, "GET", new HashMap<>());
+
             if (viewObj instanceof ModelView) {
                 request.getRequestDispatcher(((ModelView) viewObj).getUrl()).forward(request, response);
             }
@@ -198,6 +221,23 @@ public class FrontController extends HttpServlet {
     private void sendJsonResponse(HttpServletResponse response, PrintWriter out, Object data) {
         response.setContentType("application/json");
         out.println(gson.toJson(data));
+    }
+
+    private void handleAuthorizationError(HttpServletResponse response, PrintWriter out, AuthorizationException e) {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        ErrorPage.displayError(out, e, 403);
+    }
+
+    private Object getControllerInstance(Mapping mapping, HttpServletRequest request, FrontController front) throws Exception {
+        String className = mapping.getClassName();
+        Object controller = controllerInstances.get(className);
+
+        if (controller == null) {
+            throw new ServletException("Controller not initialized: " + className);
+        }
+        ReflectUtils.injectMySession(controller, request, front);
+        return controller;
     }
 
     // Getters and setters

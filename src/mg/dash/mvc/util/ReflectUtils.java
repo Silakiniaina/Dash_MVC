@@ -1,15 +1,18 @@
 package mg.dash.mvc.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 import mg.dash.mvc.annotation.RequestParam;
+import mg.dash.mvc.controller.FrontController;
 import mg.dash.mvc.controller.MySession;
 import mg.dash.mvc.handler.url.Mapping;
 
@@ -23,12 +26,15 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb, HashMap<String, String> errors)
+    public static Object executeRequestMethod(Mapping mapping, Object instance, HttpServletRequest request, String verb, HashMap<String, String> errors)
     throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
     InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException, Exception {
 
+        if(instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+        
         List<Object> objects = new ArrayList<>();
-        Class<?> objClass = Class.forName(mapping.getClassName());
         Method method = mapping.getMethodByVerb(verb);
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
@@ -88,7 +94,7 @@ public class ReflectUtils {
             throw new IllegalArgumentException("Method parameters and annotations count mismatch");
         }
 
-        return executeClassMethod(objClass, method.getName(), objects.toArray());
+        return executeClassMethod(instance, method.getName(), objects.toArray());
     }
 
     public static Class<?>[] getArgsClasses(Object... args) {
@@ -111,34 +117,47 @@ public class ReflectUtils {
         return classes;
     }
 
-    // public static Object executeMethod(Object object, String methodName, Object... args) throws NoSuchMethodException,
-    //         SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-    //     Method method = object.getClass().getMethod(methodName, getArgsClasses(args));
-    //     return method.invoke(object, args);
-    // }
-
     public static Object executeMethod(Object object, String methodName, Object... args) throws NoSuchMethodException,
     SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        System.out.println("Method name: " + methodName);
-        System.out.println("Args length: " + args.length);
-        for (Object arg : args) {
-            System.out.println("Arg class: " + (arg != null ? arg.getClass().getName() : "null"));
-        }
-
         Class<?>[] argClasses = getArgsClasses(args);
-        for (Class<?> cls : argClasses) {
-            System.out.println("Arg class after processing: " + cls.getName());
-        }
-
         Method method = object.getClass().getMethod(methodName, argClasses);
         return method.invoke(object, args);
     }
 
-    public static Object executeClassMethod(Class<?> clazz, String methodName, Object... args)
+    public static Object executeClassMethod(Object o, String methodName, Object... args)
             throws NoSuchMethodException,
             SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
             InstantiationException {
-        Object object = clazz.getConstructor().newInstance();
-        return executeMethod(object, methodName, args);
+        return executeMethod(o, methodName, args);
     }
+
+    public static void injectMySession(Object controller, HttpServletRequest request, FrontController front) throws Exception {
+        try {
+            Field[] fields = controller.getClass().getDeclaredFields();
+            boolean sessionInjected = false;
+    
+            for (Field field : fields) {
+                if (field.getType().equals(MySession.class)) {
+                    field.setAccessible(true); 
+                    MySession sessionInstance = new MySession(request.getSession());
+                    front.setMySession(sessionInstance); 
+                    field.set(controller, sessionInstance);
+                    sessionInjected = true;
+                    break;
+                }
+            }
+            Field sessionField = controller.getClass().getDeclaredField("session");
+            sessionField.setAccessible(true);
+            Object sessionValue = sessionField.get(controller);
+    
+            if (!sessionInjected || sessionValue == null) {
+                throw new IllegalStateException("Session injection failed for: " + controller.getClass().getName());
+            }
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Session injection error: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+    
 }

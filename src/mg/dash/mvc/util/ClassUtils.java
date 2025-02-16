@@ -43,7 +43,7 @@ public class ClassUtils{
                     if (result.containsKey(url)) {
                         //throw new Exception("URL efa misy oooo");
                         if (!result.get(url).getListVerbActions().add(action)){
-                            throw new Exception("Duplicate VerbAction");
+                            throw new Exception("Duplicate VerbAction for url : " + url);
                         }
                     } else if (!result.containsKey(url)) {
                         Mapping map = new Mapping(c.getName());
