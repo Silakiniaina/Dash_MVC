@@ -143,7 +143,7 @@ public class ReflectUtils {
         return executeMethod(object, methodName, args);
     }
 
-    private void injectMySession(Object controller, HttpServletRequest request) throws Exception{
+    public static void injectMySession(Object controller, HttpServletRequest request) throws Exception{
         try {
             Field[] fields = controller.getClass().getDeclaredFields();
             for (Field field : fields) {

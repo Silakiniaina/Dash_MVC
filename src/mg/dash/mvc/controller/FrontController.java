@@ -31,6 +31,7 @@ public class FrontController extends HttpServlet {
     private Map<String, Mapping> urlMapping;
     private Exception initializationError;
     private MySession mySession;
+    private Map<String, Object> controllerInstances;
 
     @Override
     public void init() throws ServletException {
@@ -211,6 +212,17 @@ public class FrontController extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         ErrorPage.displayError(out, e, 403);
+    }
+
+    private Object getControllerInstance(Mapping mapping, HttpServletRequest request) throws Exception {
+        String className = mapping.getClassName();
+        Object controller = controllerInstances.get(className);
+        
+        if (controller == null) {
+            throw new ServletException("Controller not initialized: " + className);
+        }
+        ReflectUtils.injectMySession(controller, request);
+        return controller;
     }
 
     // Getters and setters
