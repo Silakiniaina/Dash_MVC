@@ -11,6 +11,7 @@ import mg.dash.mvc.annotation.RestApi;
 import mg.dash.mvc.handler.exeption.*;
 import mg.dash.mvc.handler.url.Mapping;
 import mg.dash.mvc.handler.views.ModelView;
+import mg.dash.mvc.security.AuthorizationInterceptor;
 import mg.dash.mvc.util.ClassUtils;
 import mg.dash.mvc.util.PackageUtils;
 import mg.dash.mvc.util.ReflectUtils;
@@ -94,10 +95,14 @@ public class FrontController extends HttpServlet {
     }
 
     private void processMapping(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
+                PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
         HashMap<String, String> validationErrors = new HashMap<>();
         
         try {
+            // Check authorization before executing the method
+            Method method = mapping.getMethodByVerb(httpMethod);
+            AuthorizationInterceptor.checkAuthorization(method, request);
+            
             Object result = ReflectUtils.executeRequestMethod(mapping, request, httpMethod, validationErrors);
             
             if (!validationErrors.isEmpty()) {
@@ -107,10 +112,13 @@ public class FrontController extends HttpServlet {
             
             handleSuccessResponse(request, response, out, mapping, httpMethod, result);
             
+        } catch (AuthorizationException e) {
+            handleAuthorizationError(response, out, e);
         } catch (Exception e) {
             handleError(response, out, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response, 
             PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors) 
@@ -205,7 +213,7 @@ public class FrontController extends HttpServlet {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         ErrorPage.displayError(out, e, 403);
     }
-    
+
     // Getters and setters
     public Map<String, Mapping> getURLMapping() {
         return this.urlMapping;
