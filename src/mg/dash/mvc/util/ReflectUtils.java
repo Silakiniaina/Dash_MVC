@@ -25,12 +25,16 @@ public class ReflectUtils {
         return getMethodName("set", attributeName);
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, String verb, HashMap<String, String> errors)
+    public static Object executeRequestMethod(Mapping mapping, Object instance, HttpServletRequest request, String verb, HashMap<String, String> errors)
     throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
     InvocationTargetException, InstantiationException, ClassNotFoundException, NoSuchFieldException, Exception {
 
+        if(instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+        
         List<Object> objects = new ArrayList<>();
-        Class<?> objClass = Class.forName(mapping.getClassName());
+        Class<?> objClass = instance.getClass();
         Method method = mapping.getMethodByVerb(verb);
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
@@ -159,19 +163,23 @@ public class ReflectUtils {
         }
     }
 
-    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, 
-            String verb, Map<String, String> errors) throws Exception {
-        Class<?> clazz = Class.forName(mapping.getClassName());
-        Object instance = clazz.getDeclaredConstructor().newInstance();
-        return executeRequestMethodWithInstance(mapping, instance, request, verb, errors);
-    }
-
-    public static Object executeRequestMethodWithInstance(Mapping mapping, Object instance,
-            HttpServletRequest request, String verb, Map<String, String> errors) throws Exception {
-        Method method = mapping.getMethodByVerb(verb);
-        if (method == null) {
-            throw new NoSuchMethodException("No method found for HTTP verb: " + verb);
-        }
-        return method.invoke(instance, request);
-    }
+//  // Existing method renamed to indicate it creates a new instance
+//     public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, 
+//             String verb, Map<String, String> errors) throws Exception {
+//         Class<?> clazz = Class.forName(mapping.getClassName());
+//         Object instance = clazz.getDeclaredConstructor().newInstance();
+//         return executeRequestMethodWithInstance(mapping, instance, request, verb, errors);
+//     }
+    
+//     // New method that uses an existing instance
+//     public static Object executeRequestMethodWithInstance(Mapping mapping, Object instance,
+//             HttpServletRequest request, String verb, Map<String, String> errors) throws Exception {
+//         Method method = mapping.getMethodByVerb(verb);
+//         if (method == null) {
+//             throw new NoSuchMethodException("No method found for HTTP verb: " + verb);
+//         }
+        
+//         // Execute method with the provided instance
+//         return method.invoke(instance, request);
+//     }
 }

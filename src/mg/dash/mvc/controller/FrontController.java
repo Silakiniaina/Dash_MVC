@@ -106,7 +106,7 @@ public class FrontController extends HttpServlet {
 
     private void processMapping(HttpServletRequest request, HttpServletResponse response,
             PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
-        Map<String, String> validationErrors = new HashMap<>();
+        HashMap<String, String> validationErrors = new HashMap<>();
 
         try {
             // Get controller instance with injected session
@@ -117,7 +117,7 @@ public class FrontController extends HttpServlet {
             AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
 
             // Execute the method with the controller instance that has MySession injected
-            Object result = ReflectUtils.executeRequestMethodWithInstance(
+            Object result = ReflectUtils.executeRequestMethod(
                     mapping, controller, request, httpMethod, validationErrors);
 
             if (!validationErrors.isEmpty()) {
@@ -195,7 +195,8 @@ public class FrontController extends HttpServlet {
             Method getMethod = Optional.ofNullable(mapping.getMethodByVerb("GET"))
                     .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
 
-            Object viewObj = ReflectUtils.executeRequestMethod(mapping, request, "GET", new HashMap<>());
+            Object instance = getControllerInstance(mapping, request);
+            Object viewObj = ReflectUtils.executeRequestMethod(mapping, instance,request, "GET", new HashMap<>());
 
             if (viewObj instanceof ModelView) {
                 request.getRequestDispatcher(((ModelView) viewObj).getUrl()).forward(request, response);
