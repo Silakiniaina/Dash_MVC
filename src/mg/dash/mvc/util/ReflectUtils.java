@@ -157,6 +157,9 @@ public class ReflectUtils {
                     MySession sessionInstance = new MySession(request.getSession());
                     front.setMySession(sessionInstance);
                     field.set(controller, sessionInstance);
+                    if(field.get(controller) == null){
+                        throw new Exception("MySession not injected");
+                    }
                     break;
                 }
             }
