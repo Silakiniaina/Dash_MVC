@@ -42,17 +42,17 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void initializeUrlMapping() throws PackageScanNotFoundException ,Exception{
+    private void initializeUrlMapping() throws PackageScanNotFoundException, Exception {
         this.urlMapping = new HashMap<>();
         String packageName = getInitParameter("controller_dir");
-        
+
         if (packageName == null) {
             throw new PackageScanNotFoundException("Controller directory not specified in initialization parameters");
         }
-        
+
         var controllerClasses = PackageUtils.getClassesWithAnnotation(packageName, Controller.class);
         this.urlMapping = ClassUtils.includeMethodHavingUrlAnnotation(controllerClasses);
-        
+
         for (Class<?> controllerClass : controllerClasses) {
             try {
                 Object controllerInstance = controllerClass.getDeclaredConstructor().newInstance();
@@ -73,10 +73,10 @@ public class FrontController extends HttpServlet {
         processRequest(req, resp, "POST");
     }
 
-    private void processRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod) 
+    private void processRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod)
             throws ServletException, IOException {
         PrintWriter out = response.getWriter();
-        
+
         // Check for initialization errors
         if (initializationError != null) {
             handleError(response, out, initializationError, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -91,7 +91,7 @@ public class FrontController extends HttpServlet {
         // Get mapping for requested URL
         String requestURL = extractRequestUrl(request);
         Mapping mapping = urlMapping.get(requestURL);
-        
+
         if (mapping == null) {
             handleUrlNotFound(response, out, requestURL);
             return;
@@ -104,24 +104,29 @@ public class FrontController extends HttpServlet {
         return request.getRequestURI().substring(request.getContextPath().length());
     }
 
-    private void processMapping(HttpServletRequest request, HttpServletResponse response, 
-                PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
-        HashMap<String, String> validationErrors = new HashMap<>();
-        
+    private void processMapping(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod) throws ServletException, IOException {
+        Map<String, String> validationErrors = new HashMap<>();
+
         try {
+            // Get controller instance with injected session
+            Object controller = getControllerInstance(mapping, request);
+
             // Check authorization before executing the method
             Method method = mapping.getMethodByVerb(httpMethod);
             AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
-            
-            Object result = ReflectUtils.executeRequestMethod(mapping, request, httpMethod, validationErrors);
-            
+
+            // Execute the method with the controller instance that has MySession injected
+            Object result = ReflectUtils.executeRequestMethodWithInstance(
+                    mapping, controller, request, httpMethod, validationErrors);
+
             if (!validationErrors.isEmpty()) {
                 handleValidationErrors(request, response, out, mapping, httpMethod, validationErrors);
                 return;
             }
-            
+
             handleSuccessResponse(request, response, out, mapping, httpMethod, result);
-            
+
         } catch (AuthorizationException e) {
             handleAuthorizationError(response, out, e);
         } catch (Exception e) {
@@ -129,22 +134,22 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors) 
+    private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors)
             throws ServletException, IOException {
         Method method = mapping.getMethodByVerb(httpMethod);
-        
+
         if (method.isAnnotationPresent(RestApi.class)) {
             sendJsonResponse(response, out, errors);
             return;
         }
-        
+
         preserveFormDataAndErrors(request, errors);
         redirectToGetView(request, response, mapping);
     }
 
-    private void handleSuccessResponse(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, Object result) 
+    private void handleSuccessResponse(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, Object result)
             throws ServletException, IOException, UnknownReturnTypeException {
         if (result == null) {
             throw new UnknownReturnTypeException("Response cannot be null");
@@ -159,8 +164,8 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void handleModelViewResponse(HttpServletRequest request, HttpServletResponse response, 
-            PrintWriter out, Mapping mapping, String httpMethod, ModelView modelView) 
+    private void handleModelViewResponse(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, Mapping mapping, String httpMethod, ModelView modelView)
             throws ServletException, IOException {
         if (mapping.getMethodByVerb(httpMethod).isAnnotationPresent(RestApi.class)) {
             sendJsonResponse(response, out, modelView.getData());
@@ -170,13 +175,13 @@ public class FrontController extends HttpServlet {
         for (Map.Entry<String, Object> entry : modelView.getData().entrySet()) {
             request.setAttribute(entry.getKey(), entry.getValue());
         }
-        
+
         request.getRequestDispatcher(modelView.getUrl()).forward(request, response);
     }
 
     private void preserveFormDataAndErrors(HttpServletRequest request, Map<String, String> errors) {
         request.setAttribute("validationErrors", errors);
-        
+
         Enumeration<String> paramNames = request.getParameterNames();
         while (paramNames.hasMoreElements()) {
             String paramName = paramNames.nextElement();
@@ -184,14 +189,14 @@ public class FrontController extends HttpServlet {
         }
     }
 
-    private void redirectToGetView(HttpServletRequest request, HttpServletResponse response, 
+    private void redirectToGetView(HttpServletRequest request, HttpServletResponse response,
             Mapping mapping) throws ServletException, IOException {
         try {
             Method getMethod = Optional.ofNullable(mapping.getMethodByVerb("GET"))
-                .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
+                    .orElseThrow(() -> new ServletException("No GET method found for error redirection"));
 
             Object viewObj = ReflectUtils.executeRequestMethod(mapping, request, "GET", new HashMap<>());
-            
+
             if (viewObj instanceof ModelView) {
                 request.getRequestDispatcher(((ModelView) viewObj).getUrl()).forward(request, response);
             }
@@ -226,7 +231,7 @@ public class FrontController extends HttpServlet {
     private Object getControllerInstance(Mapping mapping, HttpServletRequest request) throws Exception {
         String className = mapping.getClassName();
         Object controller = controllerInstances.get(className);
-        
+
         if (controller == null) {
             throw new ServletException("Controller not initialized: " + className);
         }
