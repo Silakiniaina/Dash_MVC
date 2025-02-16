@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
@@ -156,5 +157,21 @@ public class ReflectUtils {
         } catch (Exception e) {
             throw e;
         }
+    }
+
+    public static Object executeRequestMethod(Mapping mapping, HttpServletRequest request, 
+            String verb, Map<String, String> errors) throws Exception {
+        Class<?> clazz = Class.forName(mapping.getClassName());
+        Object instance = clazz.getDeclaredConstructor().newInstance();
+        return executeRequestMethodWithInstance(mapping, instance, request, verb, errors);
+    }
+
+    public static Object executeRequestMethodWithInstance(Mapping mapping, Object instance,
+            HttpServletRequest request, String verb, Map<String, String> errors) throws Exception {
+        Method method = mapping.getMethodByVerb(verb);
+        if (method == null) {
+            throw new NoSuchMethodException("No method found for HTTP verb: " + verb);
+        }
+        return method.invoke(instance, request);
     }
 }
