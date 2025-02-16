@@ -2,6 +2,7 @@ package mg.dash.mvc.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import mg.dash.mvc.annotation.Post;
 import mg.dash.mvc.annotation.Url;
@@ -23,7 +24,7 @@ public class ClassUtils{
     }
 
 /* function to get the HashMap of the method having an annotation */
-    public static HashMap<String, Mapping> includeMethodHavingUrlAnnotation(ArrayList<Class<?>> listClasses)
+    public static HashMap<String, Mapping> includeMethodHavingUrlAnnotation(List<Class<?>> listClasses)
             throws Exception {
         HashMap<String, Mapping> result = new HashMap<String, Mapping>();
         for (Class<?> c : listClasses) {
