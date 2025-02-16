@@ -2,7 +2,9 @@ package mg.dash.mvc.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 
 import com.google.gson.Gson;
@@ -31,12 +33,11 @@ public class FrontController extends HttpServlet {
     private MySession mySession;
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response, String verb) 
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         HashMap<String, String> errors = new HashMap<>();
         PrintWriter out = response.getWriter();
         String requestURL = request.getRequestURI().substring(request.getContextPath().length()); 
         Mapping map = this.getURLMapping().get(requestURL);
-        response.setContentType("text/json");
 
         if(this.getMySession() == null) {
             this.setMySession(new MySession(request.getSession()));
@@ -52,22 +53,55 @@ public class FrontController extends HttpServlet {
             if(map == null) {
                 response.setContentType("text/html;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                UrlNotFoundException notFoundException = new UrlNotFoundException("Url : " + requestURL+" not found");
+                UrlNotFoundException notFoundException = new UrlNotFoundException("Url : " + requestURL + " not found");
                 ErrorPage.displayError(out, notFoundException, 404);
                 return;
             }
 
             Object obj = ReflectUtils.executeRequestMethod(map, request, verb, errors);
-            if(errors.size() > 0) {
-                response.setContentType("text/json");
-                out.println(new Gson().toJson(errors));
+        
+            if(!errors.isEmpty()) {
+                Method method = map.getMethodByVerb(verb);
+                if(method.isAnnotationPresent(RestApi.class)) {
+                    response.setContentType("text/json");
+                    out.println(new Gson().toJson(errors));
+                } else {
+                    // Store validation errors
+                    request.setAttribute("validationErrors", errors);
+                    
+                    // Preserve form data
+                    Enumeration<String> paramNames = request.getParameterNames();
+                    while(paramNames.hasMoreElements()) {
+                        String paramName = paramNames.nextElement();
+                        request.setAttribute(paramName, request.getParameter(paramName));
+                    }
+                    
+                    // Get the view URL from a dummy execution of the GET method for this URL
+                    try {
+                        Method getMethod = map.getMethodByVerb("GET");
+                        if (getMethod != null) {
+                            Object viewObj = ReflectUtils.executeRequestMethod(map, request, "GET", new HashMap<>());
+                            if (viewObj instanceof ModelView) {
+                                ModelView mv = (ModelView) viewObj;
+                                request.getRequestDispatcher(mv.getUrl()).forward(request, response);
+                                return;
+                            }
+                        }
+                    } catch (Exception e) {
+                        // If we can't get the view URL, fall back to the default error page
+                        response.setContentType("text/html;charset=UTF-8");
+                        ErrorPage.displayError(out, e, 500);
+                        return;
+                    }
+                }
                 return;
             }
             
-            if(!(obj instanceof String) && !(obj instanceof ModelView)) {
+            if(obj == null || (!(obj instanceof String) && !(obj instanceof ModelView))) {
                 response.setContentType("text/html;charset=UTF-8");
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                UnknownReturnTypeException invalidTypeException = new UnknownReturnTypeException("Response type must be String or ModelView");
+                UnknownReturnTypeException invalidTypeException = 
+                    new UnknownReturnTypeException("Response type must be String or ModelView");
                 ErrorPage.displayError(out, invalidTypeException, 500);
                 return;
             }
@@ -77,6 +111,7 @@ public class FrontController extends HttpServlet {
             } else if(obj instanceof ModelView) {
                 ModelView mv = (ModelView)obj;
                 HashMap<String, Object> data = mv.getData();
+                
                 if(map.getMethodByVerb(verb).isAnnotationPresent(RestApi.class)) {
                     response.setContentType("text/json");
                     out.println(new Gson().toJson(data));
@@ -84,6 +119,7 @@ public class FrontController extends HttpServlet {
                     for(String key : data.keySet()) {
                         request.setAttribute(key, data.get(key));
                     }
+                    
                     request.getRequestDispatcher(mv.getUrl()).forward(request, response);
                 }
             }
