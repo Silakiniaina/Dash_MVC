@@ -21,6 +21,10 @@ public class MySession {
         return session.getAttribute("user");
     }
 
+    public boolean isAuthenticated() {
+        return getUser() != null;
+    }
+
     /* Basical methods  */
     public Object get(String key){
         return this.getSession().getAttribute(key);
