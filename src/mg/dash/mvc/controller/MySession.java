@@ -41,6 +41,16 @@ public class MySession {
         return getUserRoles().contains(role);
     }
 
+    public boolean hasAnyRole(String... roles) {
+        Set<String> userRoles = getUserRoles();
+        for (String role : roles) {
+            if (userRoles.contains(role)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* Basical methods  */
     public Object get(String key){
         return this.getSession().getAttribute(key);
