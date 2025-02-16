@@ -119,7 +119,6 @@ public class FrontController extends HttpServlet {
         }
     }
 
-
     private void handleValidationErrors(HttpServletRequest request, HttpServletResponse response, 
             PrintWriter out, Mapping mapping, String httpMethod, Map<String, String> errors) 
             throws ServletException, IOException {

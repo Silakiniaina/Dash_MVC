@@ -1,5 +1,6 @@
 package mg.dash.mvc.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -140,5 +141,20 @@ public class ReflectUtils {
             InstantiationException {
         Object object = clazz.getConstructor().newInstance();
         return executeMethod(object, methodName, args);
+    }
+
+    private void injectMySession(Object controller, HttpServletRequest request) throws Exception{
+        try {
+            Field[] fields = controller.getClass().getDeclaredFields();
+            for (Field field : fields) {
+                if (field.getType().equals(MySession.class)) {
+                    field.setAccessible(true);
+                    MySession sessionInstance = new MySession(request.getSession());
+                    field.set(controller, sessionInstance);
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
     }
 }
