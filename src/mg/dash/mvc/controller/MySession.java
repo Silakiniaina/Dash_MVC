@@ -37,6 +37,10 @@ public class MySession {
         return roles != null ? roles : new HashSet<>();
     }
 
+    public boolean hasRole(String role) {
+        return getUserRoles().contains(role);
+    }
+
     /* Basical methods  */
     public Object get(String key){
         return this.getSession().getAttribute(key);
