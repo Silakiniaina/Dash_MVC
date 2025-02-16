@@ -1,6 +1,8 @@
 package mg.dash.mvc.controller;
 
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -23,6 +25,16 @@ public class MySession {
 
     public boolean isAuthenticated() {
         return getUser() != null;
+    }
+
+    public void setUserRoles(Set<String> roles) {
+        session.setAttribute("userRoles", roles);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Set<String> getUserRoles() {
+        Set<String> roles = (Set<String>) session.getAttribute("userRoles");
+        return roles != null ? roles : new HashSet<>();
     }
 
     /* Basical methods  */
