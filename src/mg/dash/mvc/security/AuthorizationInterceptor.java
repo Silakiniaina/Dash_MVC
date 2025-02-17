@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 
 public class AuthorizationInterceptor {
 
-    public static void checkMethodAuthorization(Method method, MySession mySession) throws AuthorizationException {
+    private static void checkMethodAuthorization(Method method, MySession mySession) throws AuthorizationException {
         if(method.isAnnotationPresent(Auth.class)) {
             Auth auth = method.getAnnotation(Auth.class);
             if (auth == null) {
@@ -25,7 +25,7 @@ public class AuthorizationInterceptor {
         }       
     }
 
-    public static void checkClassAuthorization(Object o, MySession session) throws AuthorizationException {
+    private static void checkClassAuthorization(Object o, MySession session) throws AuthorizationException {
         if(o.getClass().isAnnotationPresent(Auth.class)) {
             Auth auth = o.getClass().getAnnotation(Auth.class);
             if (auth == null) {
@@ -40,5 +40,10 @@ public class AuthorizationInterceptor {
                 throw new AuthorizationException("Insufficient permissions");
             }
         }
+    }
+
+    public static void checkAuthorization(Object o, Method m,  MySession session) throws AuthorizationException {
+        checkClassAuthorization(o, session);
+        checkMethodAuthorization(m, session);
     }
 }
