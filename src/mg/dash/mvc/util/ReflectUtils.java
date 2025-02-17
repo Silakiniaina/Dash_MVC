@@ -39,31 +39,24 @@ public class ReflectUtils {
         int paramNumber = method.getParameters().length;
         int countAnnotation = 0;
 
-        // First pass: validate all @RequestParam parameters
         for (Parameter parameter : method.getParameters()) {
             if (parameter.isAnnotationPresent(RequestParam.class)) {
                 Class<?> clazz = parameter.getType();
                 
-                // Skip validation for special types (Part and MySession)
                 if (!Part.class.isAssignableFrom(clazz) && !clazz.equals(MySession.class)) {
                     String annotationValue = parameter.getAnnotation(RequestParam.class).value();
-                    // This will only validate and collect errors
                     Object validationCheck = ObjectUtils.getParameterInstance(clazz, annotationValue, request, errors);
-                    
-                    // If validation failed and it's a required parameter, we should stop
                     if (validationCheck == null) {
-                        return null; // Or throw an exception, depending on your needs
+                        return null;
                     }
                 }
             }
         }
 
-        // If there are validation errors, return null or throw an exception
         if (!errors.isEmpty()) {
-            return null; // Or throw new ValidationException(errors)
+            return null; 
         }
 
-        // Second pass: actually create and populate the objects
         for (Parameter parameter : method.getParameters()) {
             Class<?> clazz = parameter.getType();
             Object object = ObjectUtils.getDefaultValue(clazz);
@@ -79,7 +72,6 @@ public class ReflectUtils {
                     String annotationValue = annotation.value();
                     object = ObjectUtils.getParameterInstance(clazz, annotationValue, request, errors);
                     
-                    // This should not happen as we've already validated, but just in case
                     if (object == null) {
                         throw new IllegalStateException("Required parameter failed validation: " + parameter.getName());
                     }
@@ -89,7 +81,6 @@ public class ReflectUtils {
             objects.add(object);
         }
 
-        // Verify that we processed the expected number of parameters
         if (countAnnotation != paramNumber) {
             throw new IllegalArgumentException("Method parameters and annotations count mismatch");
         }

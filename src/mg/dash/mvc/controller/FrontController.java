@@ -77,18 +77,15 @@ public class FrontController extends HttpServlet {
             throws ServletException, IOException {
         PrintWriter out = response.getWriter();
 
-        // Check for initialization errors
         if (initializationError != null) {
             handleError(response, out, initializationError, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
-        // Initialize or get session
         if (mySession == null) {
             mySession = new MySession(request.getSession());
         }
 
-        // Get mapping for requested URL
         String requestURL = extractRequestUrl(request);
         Mapping mapping = urlMapping.get(requestURL);
 

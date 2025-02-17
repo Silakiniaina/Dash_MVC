@@ -13,7 +13,7 @@ public class AuthorizationInterceptor {
         if(method.isAnnotationPresent(Auth.class)) {
             Auth auth = method.getAnnotation(Auth.class);
             if (auth == null) {
-                return; // No authorization required
+                return; 
             }
     
             if (!mySession.isAuthenticated() && auth.required()) {
