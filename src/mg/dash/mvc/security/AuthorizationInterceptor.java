@@ -16,11 +16,11 @@ public class AuthorizationInterceptor {
             }
     
             if (!mySession.isAuthenticated() && auth.required()) {
-                throw new AuthorizationException("Authentication required");
+                throw new AuthorizationException("Authentication required for method : "+method.getName());
             }
     
             if (auth.roles().length > 0 && !mySession.hasAnyRole(auth.roles())) {
-                throw new AuthorizationException("Insufficient permissions");
+                throw new AuthorizationException("Insufficient permissions for method : "+method.getName()+" , require : "+auth.roles()+" role to access to it");
             }
         }       
     }
@@ -33,7 +33,7 @@ public class AuthorizationInterceptor {
             }
     
             if (!session.isAuthenticated() && auth.required()) {
-                throw new AuthorizationException("Authentication required for this class");
+                throw new AuthorizationException("Authentication required for class : "+o.getClass().getName());
             }
     
             if (auth.roles().length > 0 && !session.hasAnyRole(auth.roles())) {
