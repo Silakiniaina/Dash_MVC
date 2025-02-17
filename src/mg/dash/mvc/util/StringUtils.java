@@ -40,17 +40,16 @@ public class StringUtils {
         return str == null || str.isEmpty() || str.trim().equals("");
     }
 
-    public static String parseString(Set<String> sets) {
-        if (sets == null || sets.isEmpty()) {
+    public static String parseString(String[] strings) {
+        if (strings == null || strings.length == 0) {
             return "";
         }
         
         StringBuilder result = new StringBuilder();
-        Iterator<String> iterator = sets.iterator();
         
-        while (iterator.hasNext()) {
-            result.append(iterator.next());
-            if (iterator.hasNext()) {
+        for (int i = 0; i < strings.length; i++) {
+            result.append(strings[i]);
+            if (i < strings.length - 1) {
                 result.append(" - ");
             }
         }
