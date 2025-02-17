@@ -109,14 +109,9 @@ public class FrontController extends HttpServlet {
         HashMap<String, String> validationErrors = new HashMap<>();
 
         try {
-            // Get controller instance with injected session
             Object controller = getControllerInstance(mapping, request, this);
-
-            // Check authorization before executing the method
             Method method = mapping.getMethodByVerb(httpMethod);
             AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
-
-            // Execute the method with the controller instance that has MySession injected
             Object result = ReflectUtils.executeRequestMethod(
                     mapping, controller, request, httpMethod, validationErrors);
 
@@ -124,9 +119,7 @@ public class FrontController extends HttpServlet {
                 handleValidationErrors(request, response, out, mapping, httpMethod, validationErrors);
                 return;
             }
-
             handleSuccessResponse(request, response, out, mapping, httpMethod, result);
-
         } catch (AuthorizationException e) {
             handleAuthorizationError(response, out, e);
         } catch (Exception e) {
