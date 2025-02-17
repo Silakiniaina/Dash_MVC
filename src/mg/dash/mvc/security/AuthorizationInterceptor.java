@@ -20,7 +20,7 @@ public class AuthorizationInterceptor {
             }
     
             if (auth.roles().length > 0 && !mySession.hasAnyRole(auth.roles())) {
-                throw new AuthorizationException("Insufficient permissions for method : "+method.getName()+" , require : "+auth.roles()+" role to access to it");
+                throw new AuthorizationException("Insufficient permissions for method : "+method.getName()+" , require : "+auth.roles().toString()+" role to access to it");
             }
         }       
     }
@@ -37,7 +37,7 @@ public class AuthorizationInterceptor {
             }
     
             if (auth.roles().length > 0 && !session.hasAnyRole(auth.roles())) {
-                throw new AuthorizationException("Insufficient permissions for class : "+o.getClass().getName()+" , require : "+auth.roles()+" role to access to it");
+                throw new AuthorizationException("Insufficient permissions for class : "+o.getClass().getName()+" , require : "+auth.roles().toString()+" role to access to it");
             }
         }
     }
