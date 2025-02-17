@@ -134,27 +134,15 @@ public class ReflectUtils {
     public static void injectMySession(Object controller, HttpServletRequest request, FrontController front) throws Exception {
         try {
             Field[] fields = controller.getClass().getDeclaredFields();
-            boolean sessionInjected = false;
-    
             for (Field field : fields) {
                 if (field.getType().equals(MySession.class)) {
                     field.setAccessible(true); 
                     MySession sessionInstance = new MySession(request.getSession());
                     front.setMySession(sessionInstance); 
                     field.set(controller, sessionInstance);
-                    sessionInjected = true;
                     break;
                 }
             }
-            Field sessionField = controller.getClass().getDeclaredField("session");
-            sessionField.setAccessible(true);
-            Object sessionValue = sessionField.get(controller);
-    
-            if (!sessionInjected || sessionValue == null) {
-                throw new IllegalStateException("Session injection failed for: " + controller.getClass().getName());
-            }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new RuntimeException("Session injection error: " + e.getMessage(), e);
         } catch (Exception e) {
             throw e;
         }
