@@ -29,15 +29,15 @@ public class AuthorizationInterceptor {
         if(o.getClass().isAnnotationPresent(Auth.class)) {
             Auth auth = o.getClass().getAnnotation(Auth.class);
             if (auth == null) {
-                return; // No authorization required
+                return; 
             }
     
             if (!session.isAuthenticated() && auth.required()) {
-                throw new AuthorizationException("Authentication required");
+                throw new AuthorizationException("Authentication required for this class");
             }
     
             if (auth.roles().length > 0 && !session.hasAnyRole(auth.roles())) {
-                throw new AuthorizationException("Insufficient permissions");
+                throw new AuthorizationException("Insufficient permissions for class : "+o.getClass().getName()+" , require : "+auth.roles()+" role to access to it");
             }
         }
     }
