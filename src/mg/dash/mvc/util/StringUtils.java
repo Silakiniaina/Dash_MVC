@@ -3,6 +3,8 @@ package mg.dash.mvc.util;
 import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Iterator;
+import java.util.Set;
 
 public class StringUtils {
     
@@ -36,5 +38,22 @@ public class StringUtils {
 
     public static boolean isNull(String str) {
         return str == null || str.isEmpty() || str.trim().equals("");
+    }
+
+    public static String parseString(String[] strings) {
+        if (strings == null || strings.length == 0) {
+            return "";
+        }
+        
+        StringBuilder result = new StringBuilder();
+        
+        for (int i = 0; i < strings.length; i++) {
+            result.append(strings[i]);
+            if (i < strings.length - 1) {
+                result.append(" - ");
+            }
+        }
+        
+        return result.toString();
     }
 }

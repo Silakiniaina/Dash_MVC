@@ -77,18 +77,15 @@ public class FrontController extends HttpServlet {
             throws ServletException, IOException {
         PrintWriter out = response.getWriter();
 
-        // Check for initialization errors
         if (initializationError != null) {
             handleError(response, out, initializationError, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
-        // Initialize or get session
         if (mySession == null) {
             mySession = new MySession(request.getSession());
         }
 
-        // Get mapping for requested URL
         String requestURL = extractRequestUrl(request);
         Mapping mapping = urlMapping.get(requestURL);
 
@@ -109,14 +106,9 @@ public class FrontController extends HttpServlet {
         HashMap<String, String> validationErrors = new HashMap<>();
 
         try {
-            // Get controller instance with injected session
             Object controller = getControllerInstance(mapping, request, this);
-
-            // Check authorization before executing the method
             Method method = mapping.getMethodByVerb(httpMethod);
-            AuthorizationInterceptor.checkAuthorization(method, this.getMySession());
-
-            // Execute the method with the controller instance that has MySession injected
+            AuthorizationInterceptor.checkAuthorization(controller, method, this.getMySession());
             Object result = ReflectUtils.executeRequestMethod(
                     mapping, controller, request, httpMethod, validationErrors);
 
@@ -124,9 +116,7 @@ public class FrontController extends HttpServlet {
                 handleValidationErrors(request, response, out, mapping, httpMethod, validationErrors);
                 return;
             }
-
             handleSuccessResponse(request, response, out, mapping, httpMethod, result);
-
         } catch (AuthorizationException e) {
             handleAuthorizationError(response, out, e);
         } catch (Exception e) {
